@@ -1,0 +1,1001 @@
+/* ==========================================================================
+   SOLAR SYSTEM OBSERVATION SYSTEM // CLEAN FUTURISTIC UI
+   Prioritizing Space, Maximum Immersion, and Elegant Hierarchy
+   ========================================================================== */
+
+:root {
+  --bg-deep-space: #030712;
+  --bg-glass-panel: rgba(6, 12, 26, 0.82);
+  --bg-glass-card: rgba(13, 22, 42, 0.65);
+  
+  --border-cyan: rgba(0, 240, 255, 0.28);
+  --border-cyan-glow: rgba(0, 240, 255, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  
+  --accent-cyan: #00f0ff;
+  --accent-blue: #38bdf8;
+  --accent-amber: #fbbf24;
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  --font-display: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+  
+  --shadow-neon: 0 0 14px rgba(0, 240, 255, 0.3);
+  --shadow-panel: -8px 0 32px rgba(0, 0, 0, 0.75);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-deep-space);
+  font-family: var(--font-body);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   1. Fullscreen Hero 3D WebGL Canvas
+   ========================================================================== */
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  cursor: grab;
+}
+
+#canvas-container:active {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
+   2. Minimalist Top Header (Quiet, Unobtrusive)
+   ========================================================================== */
+.minimal-header {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(6, 12, 26, 0.7);
+  border: 1px solid var(--border-cyan);
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.live-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-green);
+  padding-left: 6px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+.minimal-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(6, 12, 26, 0.7);
+  border: 1px solid var(--border-cyan);
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.minimal-icon-btn:hover {
+  background: rgba(14, 26, 52, 0.9);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+  transform: scale(1.06);
+}
+
+/* ==========================================================================
+   3. Floating Compact Control Bar
+   ========================================================================== */
+.floating-controls-bar {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-glass-panel);
+  border: 1px solid var(--border-cyan);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  z-index: 25;
+  transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* When the right panel is open, shift the floating controls slightly left to maintain balance */
+body.panel-open .floating-controls-bar {
+  right: calc(34vw + 24px);
+}
+
+.ctrl-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ctrl-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ctrl-btn.active {
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.ctrl-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border-subtle);
+  margin: 0 2px;
+}
+
+/* Speed Mini Pill */
+.speed-mini-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.speed-label {
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.speed-val {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  min-width: 28px;
+}
+
+.speed-mini-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 55px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.speed-mini-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 6px var(--accent-cyan);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   4. Minimal Hover Tooltip
+   ========================================================================== */
+.hover-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 40;
+  background: rgba(4, 9, 22, 0.88);
+  border: 1px solid var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  padding: 5px 9px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+  transform: translate(-50%, -125%);
+  transition: opacity 0.12s ease, transform 0.08s ease;
+  white-space: nowrap;
+}
+
+.tooltip-name {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+
+.tooltip-type {
+  font-size: 0.62rem;
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   5. Clean Slide-Out Right Information Panel (30-35% Width)
+   ========================================================================== */
+.slide-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32vw;
+  min-width: 340px;
+  max-width: 440px;
+  height: 100vh;
+  background: var(--bg-glass-panel);
+  border-left: 1px solid var(--border-cyan);
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow-panel);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.slide-panel.hidden {
+  transform: translateX(105%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Panel Header */
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 22px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.header-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.panel-object-name {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+}
+
+.panel-object-type {
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.panel-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+
+.panel-close-btn:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: var(--accent-red);
+  color: #fff;
+}
+
+/* Tagline Bar */
+.panel-tagline-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.planet-accent-pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.panel-tagline-text {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+/* Panel Tabs */
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.15);
+  overflow-x: auto;
+}
+
+.panel-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 10px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+}
+
+.tab-btn.active {
+  color: var(--accent-cyan);
+  border-bottom-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.06);
+}
+
+/* Panel Body & Panes */
+.panel-tab-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px 28px;
+}
+
+.panel-tab-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-tab-body::-webkit-scrollbar-thumb {
+  background: var(--border-cyan);
+  border-radius: 4px;
+}
+
+.tab-pane {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeInPane 0.2s ease forwards;
+}
+
+.tab-pane.active {
+  display: flex;
+}
+
+/* Overview Layout */
+.panel-intro-text {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.clean-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.data-item {
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.data-label {
+  font-family: var(--font-display);
+  font-size: 0.54rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-cyan);
+}
+
+.data-number {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Rows List (Physical & Orbit) */
+.data-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+}
+
+.data-row-key {
+  color: var(--text-muted);
+}
+
+.data-row-val {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Sub-block (Atmosphere) */
+.sub-block {
+  margin-top: 4px;
+}
+
+.sub-title {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.atmo-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.atmo-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.atmo-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.atmo-meta span:last-child {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.atmo-bar-bg {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.atmo-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+/* Moons List */
+.clean-moons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.moon-item-btn {
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.moon-item-btn:hover {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: var(--accent-cyan);
+  transform: translateX(3px);
+}
+
+.moon-dot-pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.moon-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.moon-item-name {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.moon-item-sub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* Facts List */
+.clean-facts-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.clean-facts-list li {
+  position: relative;
+  padding: 8px 10px 8px 20px;
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.clean-facts-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 8px;
+  color: var(--accent-cyan);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   6. Clean Discreet Bottom Planet Dock
+   ========================================================================== */
+.minimal-dock {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-glass-panel);
+  border: 1px solid var(--border-cyan);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  z-index: 25;
+  max-width: 90vw;
+  overflow-x: auto;
+  transition: transform 0.3s ease;
+}
+
+.minimal-dock::-webkit-scrollbar {
+  display: none;
+}
+
+.dock-dot-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 5px 8px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.dock-dot-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dock-dot-btn.active {
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.14);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.sun-dot { background-color: #ffaa00; color: #ffaa00; }
+.mercury-dot { background-color: #a8a29e; color: #a8a29e; }
+.venus-dot { background-color: #eab308; color: #eab308; }
+.earth-dot { background-color: #38bdf8; color: #38bdf8; }
+.mars-dot { background-color: #ef4444; color: #ef4444; }
+.jupiter-dot { background-color: #f97316; color: #f97316; }
+.saturn-dot { background-color: #fde047; color: #fde047; }
+.uranus-dot { background-color: #22d3ee; color: #22d3ee; }
+.neptune-dot { background-color: #3b82f6; color: #3b82f6; }
+
+/* ==========================================================================
+   7. 3D Planet Labels (Subtle, Clean)
+   ========================================================================== */
+.planet-badge-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 240, 255, 0.6);
+  transition: opacity 0.2s ease;
+  will-change: transform, opacity;
+  transform-origin: center bottom;
+  z-index: 10;
+  user-select: none;
+}
+
+/* Mobile Sheet Drag Handle Affordance */
+.mobile-sheet-handle {
+  display: none;
+  width: 38px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.28);
+  margin: 8px auto 2px;
+  cursor: grab;
+  transition: background 0.2s ease;
+}
+
+.mobile-sheet-handle:active {
+  background: var(--accent-cyan);
+}
+
+/* Utilities & Animations */
+.hidden {
+  display: none !important;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+@keyframes fadeInPane {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   8. Responsive Design (Mobile / Small Screen: Bottom Sheet & Compact Controls)
+   ========================================================================== */
+@media (max-width: 860px) {
+  .minimal-header {
+    top: 12px;
+    left: 12px;
+    gap: 10px;
+  }
+
+  .brand-group {
+    padding: 6px 11px;
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
+  }
+
+  .minimal-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Center floating controls properly without clipping */
+  .floating-controls-bar {
+    top: auto;
+    bottom: 56px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 20px);
+    padding: 5px 8px;
+    gap: 4px;
+    white-space: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  }
+
+  .floating-controls-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.panel-open .floating-controls-bar {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .speed-mini-pill {
+    display: none; /* Collapse slider on touch/mobile */
+  }
+
+  .ctrl-btn {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Minimal Planet Dock at bottom */
+  .minimal-dock {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 16px);
+    padding: 4px 8px;
+    gap: 3px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  }
+
+  .dock-dot-btn {
+    padding: 4px 6px;
+    font-size: 0.58rem;
+    gap: 4px;
+  }
+
+  /* Tuck dock away when bottom sheet is open so they never clash */
+  body.panel-open .minimal-dock {
+    transform: translateX(-50%) translateY(125%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Slide panel becomes a sleek, high-end bottom sheet */
+  .slide-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+    height: 55vh;
+    max-height: 82vh;
+    border-left: none;
+    border-top: 1px solid var(--border-cyan);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.88);
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .slide-panel.hidden {
+    transform: translateY(105%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mobile-sheet-handle {
+    display: block;
+  }
+
+  .panel-header {
+    padding: 14px 18px 10px;
+  }
+
+  .panel-object-name {
+    font-size: 1.35rem;
+  }
+
+  .panel-tagline-bar {
+    padding: 8px 18px;
+  }
+
+  .panel-tab-body {
+    padding: 14px 18px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Extra Compact Phones (iPhone SE, Galaxy S, screens <= 480px) */
+@media (max-width: 480px) {
+  .minimal-header {
+    top: 10px;
+    left: 10px;
+    gap: 8px;
+  }
+
+  .brand-group {
+    padding: 5px 9px;
+  }
+
+  .brand-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  .live-status-pill {
+    font-size: 0.52rem;
+    padding-left: 5px;
+  }
+
+  .minimal-icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .floating-controls-bar {
+    bottom: 50px;
+    padding: 4px 6px;
+    gap: 3px;
+  }
+
+  .ctrl-btn {
+    padding: 4px 6px;
+    font-size: 0.54rem;
+  }
+
+  .minimal-dock {
+    bottom: 8px;
+    padding: 3px 5px;
+    gap: 2px;
+  }
+
+  .dock-dot-btn {
+    padding: 3px 5px;
+    font-size: 0.52rem;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .slide-panel {
+    height: 60vh;
+  }
+
+  .panel-object-name {
+    font-size: 1.2rem;
+  }
+
+  .clean-data-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .data-item {
+    padding: 6px 8px;
+  }
+
+  .data-label {
+    font-size: 0.5rem;
+  }
+
+  .data-number {
+    font-size: 0.74rem;
+  }
+}

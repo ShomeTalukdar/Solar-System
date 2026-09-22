@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar System // Observation System</title>
+  <meta name="description" content="A clean, minimalist 3D Solar System exploration observation system. Explore cartoon-realistic planets, orbits, asteroid belts, and astronomical data.">
+  
+  <!-- Google Fonts: Orbitron & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Three.js, OrbitControls and Tween.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container - Fullscreen Hero -->
+  <div id="canvas-container"></div>
+
+  <!-- Minimalist Top Navigation Header -->
+  <header class="minimal-header">
+    <div class="brand-group">
+      <h1 class="brand-title">SOLAR SYSTEM</h1>
+      <span class="live-status-pill"><span class="status-dot"></span>LIVE</span>
+    </div>
+
+    <!-- Audio Mute/Unmute Minimalist Button -->
+    <button id="audio-toggle" class="minimal-icon-btn" title="Toggle Ambient Audio (space sound.mp3)" aria-label="Toggle Audio">
+      <svg id="audio-icon-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <svg id="audio-icon-off" class="hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Compact Floating Control Bar (Clean Spaceship Observation Panel) -->
+  <nav class="floating-controls-bar" aria-label="Simulation Controls">
+    <!-- Play / Pause -->
+    <button id="btn-play-pause" class="ctrl-btn active" title="Play / Pause [Space]">
+      <span id="play-pause-icon">⏸</span>
+    </button>
+
+    <div class="ctrl-divider"></div>
+
+    <!-- Speed Mini Control -->
+    <div class="speed-mini-pill" title="Time Speed">
+      <span class="speed-label">SPEED:</span>
+      <span id="speed-value" class="speed-val">1.0x</span>
+      <input type="range" id="speed-slider" min="0" max="5" step="0.25" value="1" class="speed-mini-range">
+    </div>
+
+    <div class="ctrl-divider"></div>
+
+    <!-- Toggles -->
+    <button id="btn-toggle-orbits" class="ctrl-btn active" title="Toggle Orbital Lines [O]">
+      <span>ORBITS</span>
+    </button>
+
+    <button id="btn-toggle-asteroids" class="ctrl-btn active" title="Toggle Asteroid Belt [A]">
+      <span>ASTEROIDS</span>
+    </button>
+
+    <button id="btn-toggle-labels" class="ctrl-btn active" title="Toggle Planet Labels [L]">
+      <span>LABELS</span>
+    </button>
+
+    <div class="ctrl-divider"></div>
+
+    <!-- Reset Camera -->
+    <button id="btn-reset-view" class="ctrl-btn" title="Reset Overview [R]">
+      <span>RESET</span>
+    </button>
+  </nav>
+
+  <!-- Minimal Hover Tooltip (Small and unobtrusive) -->
+  <div id="hover-tooltip" class="hover-tooltip hidden">
+    <div class="tooltip-name" id="tooltip-name">Earth</div>
+    <div class="tooltip-type" id="tooltip-type">Terrestrial Planet</div>
+  </div>
+
+  <!-- Clean Slide-Out Right Information Panel (30-35% Screen Width) -->
+  <aside id="info-panel" class="slide-panel hidden">
+    <!-- Mobile Drag Handle Affordance -->
+    <div class="mobile-sheet-handle" aria-hidden="true"></div>
+
+    <!-- Panel Header: Object Name & Close Button -->
+    <div class="panel-header">
+      <div class="header-text-block">
+        <h2 class="panel-object-name" id="info-name">Earth</h2>
+        <span class="panel-object-type" id="info-type">TERRESTRIAL PLANET</span>
+      </div>
+      <button id="btn-close-panel" class="panel-close-btn" title="Close Panel [Esc]" aria-label="Close Information Panel">✕</button>
+    </div>
+
+    <!-- Short Tagline & Preview -->
+    <div class="panel-tagline-bar">
+      <div class="planet-accent-pip" id="info-color-preview"></div>
+      <p class="panel-tagline-text" id="info-tagline">The Blue Marble & Cradle of Human Civilization</p>
+    </div>
+
+    <!-- Clean Navigation Tabs: Overview | Physical | Orbit | Moons | Facts -->
+    <nav class="panel-tabs">
+      <button class="tab-btn active" data-tab="overview">OVERVIEW</button>
+      <button class="tab-btn" data-tab="physical">PHYSICAL</button>
+      <button class="tab-btn" data-tab="orbit">ORBIT</button>
+      <button class="tab-btn" data-tab="moons">MOONS (<span id="tab-moon-count">1</span>)</button>
+      <button class="tab-btn" data-tab="facts">FACTS</button>
+    </nav>
+
+    <!-- Tab Content Scrollable Body -->
+    <div class="panel-tab-body">
+
+      <!-- SECTION 1: OVERVIEW -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="intro-block">
+          <p id="info-description" class="panel-intro-text"></p>
+        </div>
+
+        <div class="clean-data-grid">
+          <div class="data-item">
+            <span class="data-label">DIAMETER</span>
+            <span class="data-number" id="quick-diameter">12,742 km</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">DIST. FROM SUN</span>
+            <span class="data-number" id="quick-distance">1.0 AU</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">ORBITAL PERIOD</span>
+            <span class="data-number" id="quick-year">365.25 Days</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">SURFACE TEMP</span>
+            <span class="data-number" id="info-temp">15°C</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: PHYSICAL DATA -->
+      <section id="tab-physical" class="tab-pane">
+        <div class="data-rows-list">
+          <div class="data-row">
+            <span class="data-row-key">Mass</span>
+            <span class="data-row-val" id="info-mass">5.972 × 10²⁴ kg</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Diameter</span>
+            <span class="data-row-val" id="info-diameter">12,742 km</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Gravity</span>
+            <span class="data-row-val" id="info-physical-gravity">9.81 m/s² (1.0 g)</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Density</span>
+            <span class="data-row-val" id="info-density">5.51 g/cm³</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Temperature Range</span>
+            <span class="data-row-val" id="info-temp-range">-89°C to +57°C</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Escape Velocity</span>
+            <span class="data-row-val" id="info-escape-velocity">11.19 km/s</span>
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">ATMOSPHERE</div>
+          <div id="atmosphere-bars-container" class="atmo-bars"></div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: ORBITAL DATA -->
+      <section id="tab-orbit" class="tab-pane">
+        <div class="data-rows-list">
+          <div class="data-row">
+            <span class="data-row-key">Distance From Sun</span>
+            <span class="data-row-val" id="info-distance">149.6M km (1.0 AU)</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Orbital Period</span>
+            <span class="data-row-val" id="info-orbit-period">365.25 Days</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Rotation Period</span>
+            <span class="data-row-val" id="info-orbit-rotation">24 Hours</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Orbital Speed</span>
+            <span class="data-row-val" id="info-orbit-speed">29.78 km/s</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Eccentricity</span>
+            <span class="data-row-val" id="info-eccentricity">0.0167</span>
+          </div>
+          <div class="data-row">
+            <span class="data-row-key">Inclination</span>
+            <span class="data-row-val" id="info-inclination">0.00°</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: MOONS -->
+      <section id="tab-moons" class="tab-pane">
+        <div id="moons-cards-list" class="clean-moons-list"></div>
+      </section>
+
+      <!-- SECTION 5: FACTS -->
+      <section id="tab-facts" class="tab-pane">
+        <ul id="info-facts-list" class="clean-facts-list"></ul>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- Clean Floating Planet Selector (Discreet Bottom Dock) -->
+  <nav class="minimal-dock" aria-label="Planet Selector">
+    <button class="dock-dot-btn" data-planet="Sun" title="Sun"><span class="dot sun-dot"></span><span>Sun</span></button>
+    <button class="dock-dot-btn" data-planet="Mercury" title="Mercury"><span class="dot mercury-dot"></span><span>Mer</span></button>
+    <button class="dock-dot-btn" data-planet="Venus" title="Venus"><span class="dot venus-dot"></span><span>Ven</span></button>
+    <button class="dock-dot-btn" data-planet="Earth" title="Earth"><span class="dot earth-dot"></span><span>Ear</span></button>
+    <button class="dock-dot-btn" data-planet="Mars" title="Mars"><span class="dot mars-dot"></span><span>Mar</span></button>
+    <button class="dock-dot-btn" data-planet="Jupiter" title="Jupiter"><span class="dot jupiter-dot"></span><span>Jup</span></button>
+    <button class="dock-dot-btn" data-planet="Saturn" title="Saturn"><span class="dot saturn-dot"></span><span>Sat</span></button>
+    <button class="dock-dot-btn" data-planet="Uranus" title="Uranus"><span class="dot uranus-dot"></span><span>Ura</span></button>
+    <button class="dock-dot-btn" data-planet="Neptune" title="Neptune"><span class="dot neptune-dot"></span><span>Nep</span></button>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>
