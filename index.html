@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/navigation.css">
   
   <!-- Three.js, OrbitControls and Tween.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -22,20 +23,25 @@
   <!-- 3D WebGL Canvas Container - Fullscreen Hero -->
   <div id="canvas-container"></div>
 
-  <!-- Minimalist Top Navigation Header -->
+  <!-- Minimalist Top Header -->
   <header class="minimal-header">
     <div class="brand-group">
       <h1 class="brand-title">SOLAR SYSTEM</h1>
       <span class="live-status-pill"><span class="status-dot"></span>LIVE</span>
     </div>
 
-    <!-- Audio Mute/Unmute Minimalist Button -->
-    <button id="audio-toggle" class="minimal-icon-btn" title="Toggle Ambient Audio (space sound.mp3)" aria-label="Toggle Audio">
-      <svg id="audio-icon-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+    <button id="hud-search-btn" class="hud-search-btn" title="Search Mission Catalog (Ctrl+K)" aria-label="Search Missions">
+      <span class="hud-search-icon">🔍</span>
+      <span>Search</span>
+      <kbd class="hud-search-kbd">Ctrl+K</kbd>
+    </button>
+
+    <button id="audio-toggle" class="minimal-icon-btn" title="Toggle Ambient Space Audio" aria-label="Toggle Audio">
+      <svg id="audio-icon-on" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
         <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
       </svg>
-      <svg id="audio-icon-off" class="hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+      <svg id="audio-icon-off" class="hidden" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
         <line x1="23" y1="9" x2="17" y2="15"></line>
         <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -43,16 +49,14 @@
     </button>
   </header>
 
-  <!-- Compact Floating Control Bar (Clean Spaceship Observation Panel) -->
+  <!-- Compact Observation Controls (Top-Right) -->
   <nav class="floating-controls-bar" aria-label="Simulation Controls">
-    <!-- Play / Pause -->
     <button id="btn-play-pause" class="ctrl-btn active" title="Play / Pause [Space]">
       <span id="play-pause-icon">⏸</span>
     </button>
 
     <div class="ctrl-divider"></div>
 
-    <!-- Speed Mini Control -->
     <div class="speed-mini-pill" title="Time Speed">
       <span class="speed-label">SPEED:</span>
       <span id="speed-value" class="speed-val">1.0x</span>
@@ -61,7 +65,6 @@
 
     <div class="ctrl-divider"></div>
 
-    <!-- Toggles -->
     <button id="btn-toggle-orbits" class="ctrl-btn active" title="Toggle Orbital Lines [O]">
       <span>ORBITS</span>
     </button>
@@ -76,11 +79,472 @@
 
     <div class="ctrl-divider"></div>
 
-    <!-- Reset Camera -->
     <button id="btn-reset-view" class="ctrl-btn" title="Reset Overview [R]">
       <span>RESET</span>
     </button>
   </nav>
+
+  <!-- Collapsible Left Navigation Rail (Narrow vertical icon rail by default) -->
+  <nav id="left-nav" class="left-nav-rail" aria-label="System Navigation">
+    <button class="rail-item active" data-view="explore" title="Explore 3D Orbit">
+      <span class="rail-icon">🪐</span>
+      <span class="rail-label">Explore</span>
+    </button>
+    <button class="rail-item" data-view="archive" title="Mission Catalog">
+      <span class="rail-icon">📁</span>
+      <span class="rail-label">Archive</span>
+    </button>
+    <button class="rail-item" data-view="trails" title="Orbital Trajectory Visualizer">
+      <span class="rail-icon">🛰️</span>
+      <span class="rail-label">Trails</span>
+    </button>
+    <button class="rail-item" data-view="where-they-remain" title="Moon & Mars Hardware Atlas">
+      <span class="rail-icon">📍</span>
+      <span class="rail-label">Where They Remain</span>
+    </button>
+    <button class="rail-item" data-view="people" title="Human Stories">
+      <span class="rail-icon">👥</span>
+      <span class="rail-label">People</span>
+    </button>
+    <button class="rail-item" data-view="learn" title="Learn & Play">
+      <span class="rail-icon">🎮</span>
+      <span class="rail-label">Learn & Play</span>
+    </button>
+    <button class="rail-item" data-view="sources" title="Sources & Citations">
+      <span class="rail-icon">ℹ️</span>
+      <span class="rail-label">Sources</span>
+    </button>
+  </nav>
+
+  <!-- Compact Mission Radar Telemetry Card (Bottom-Left) -->
+  <aside id="radar-widget" class="radar-card" aria-label="Mission Radar Widget">
+    <div class="radar-card-header">
+      <span class="radar-tag">MISSION RADAR</span>
+      <div class="radar-nav-arrows">
+        <button id="radar-prev-btn" class="radar-arrow-btn" title="Previous Mission">‹</button>
+        <button id="radar-next-btn" class="radar-arrow-btn" title="Next Mission">›</button>
+      </div>
+    </div>
+    <div id="radar-callsign" class="radar-mission-name">Apollo 11</div>
+    <div class="radar-data-line">
+      <span id="radar-target-badge" class="radar-target-pill">MOON</span>
+      <span class="radar-sep">•</span>
+      <span id="radar-distance-val" class="radar-distance-text">384,400 km</span>
+    </div>
+    <div id="radar-fate-badge" class="radar-fate-text">Resting on Moon</div>
+    <button id="radar-action-btn" class="radar-explore-btn">Explore Story →</button>
+  </aside>
+
+  <!-- Canvas Blur Layer (Only active when in non-Explore views) -->
+  <div id="canvas-blur-layer" aria-hidden="true"></div>
+
+  <!-- Focused View Panels Container (Only ONE active at a time) -->
+  <div id="views-container" class="views-container" aria-live="polite">
+
+    <!-- 1. ARCHIVE: Mission Catalog -->
+    <section id="view-archive" class="view-panel" data-view="archive">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ ARCHIVE ]</span>
+          <h2 class="view-title-main">Mission Catalog</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="view-intro-hero">
+          <h3 class="view-intro-title">Exploration Voyages of the Space Age</h3>
+          <p class="view-intro-desc">Browse robotic and crewed voyages across the Solar System. Select any mission to jump directly to its target in 3D orbit.</p>
+        </div>
+
+        <div class="archive-toolbar">
+          <div class="archive-search-box">
+            <span class="archive-search-icon">🔍</span>
+            <input type="text" id="archive-search-input" class="archive-search-input" placeholder="Search mission name or destination...">
+          </div>
+
+          <div class="archive-filter-chips">
+            <button class="filter-chip active" data-category="all">All</button>
+            <button class="filter-chip" data-category="Lunar">Moon</button>
+            <button class="filter-chip" data-category="Mars">Mars</button>
+            <button class="filter-chip" data-category="Deep Space">Deep Space</button>
+          </div>
+        </div>
+
+        <div class="mission-catalog-grid">
+          <article class="mission-catalog-card" data-category="Lunar">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">Apollo 11</h4>
+                <div class="catalog-card-sub">Lunar Landing • 1969</div>
+              </div>
+              <span class="radar-target-pill">MOON</span>
+            </div>
+            <p class="catalog-card-body">The first crewed landing on the Moon. Neil Armstrong and Buzz Aldrin landed the Lunar Module Eagle at Tranquility Base while Michael Collins orbited above.</p>
+            <div class="catalog-card-meta">
+              <span>Status: <strong>Preserved at Base</strong></span>
+              <span>Coordinates: <strong>0.674° N, 23.473° E</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Earth">Track in 3D →</button>
+          </article>
+
+          <article class="mission-catalog-card" data-category="Mars">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">Perseverance</h4>
+                <div class="catalog-card-sub">Mars 2020 Rover • 2020</div>
+              </div>
+              <span class="radar-target-pill" style="color:#fdba74;">MARS</span>
+            </div>
+            <p class="catalog-card-body">Astrobiology rover exploring the ancient river delta in Jezero Crater, seeking biosignatures, and caching rock cores for future sample return.</p>
+            <div class="catalog-card-meta">
+              <span>Status: <strong>Active Rover</strong></span>
+              <span>Site: <strong>Jezero Crater</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Mars">Track in 3D →</button>
+          </article>
+
+          <article class="mission-catalog-card" data-category="Deep Space">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">Voyager 1</h4>
+                <div class="catalog-card-sub">Interstellar Probe • 1977</div>
+              </div>
+              <span class="radar-target-pill" style="color:#c084fc;">DEEP SPACE</span>
+            </div>
+            <p class="catalog-card-body">Humanity's most distant emissary, now traveling through interstellar space beyond the Sun's heliosphere with the Golden Record aboard.</p>
+            <div class="catalog-card-meta">
+              <span>Distance: <strong>24.4B km (163 AU)</strong></span>
+              <span>Speed: <strong>17.0 km/s</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Sun">Track in 3D →</button>
+          </article>
+
+          <article class="mission-catalog-card" data-category="Mars">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">Curiosity</h4>
+                <div class="catalog-card-sub">Mars Science Laboratory • 2011</div>
+              </div>
+              <span class="radar-target-pill" style="color:#fdba74;">MARS</span>
+            </div>
+            <p class="catalog-card-body">Nuclear-powered robotic rover examining layered sedimentary rocks on Mount Sharp in Gale Crater, establishing that ancient Mars once had habitable water lakes.</p>
+            <div class="catalog-card-meta">
+              <span>Status: <strong>Active Laboratory</strong></span>
+              <span>Site: <strong>Mount Sharp</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Mars">Track in 3D →</button>
+          </article>
+
+          <article class="mission-catalog-card" data-category="Deep Space">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">New Horizons</h4>
+                <div class="catalog-card-sub">Kuiper Belt Explorer • 2006</div>
+              </div>
+              <span class="radar-target-pill" style="color:#c084fc;">DEEP SPACE</span>
+            </div>
+            <p class="catalog-card-body">Conducted the historic first flyby of dwarf planet Pluto and its moon Charon, revealing active nitrogen ice glaciers, before exploring planetesimal Arrokoth.</p>
+            <div class="catalog-card-meta">
+              <span>Status: <strong>Kuiper Belt Drift</strong></span>
+              <span>Distance: <strong>8.6B km</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Neptune">Track in 3D →</button>
+          </article>
+
+          <article class="mission-catalog-card" data-category="Lunar">
+            <div class="catalog-card-header">
+              <div>
+                <h4 class="catalog-card-title">Artemis I</h4>
+                <div class="catalog-card-sub">SLS & Orion • 2022</div>
+              </div>
+              <span class="radar-target-pill">MOON</span>
+            </div>
+            <p class="catalog-card-body">Flight test of the Space Launch System rocket and Orion capsule, demonstrating deep-space reentry speeds and validating human-rated systems for lunar return.</p>
+            <div class="catalog-card-meta">
+              <span>Status: <strong>Mission Complete</strong></span>
+              <span>Max Dist: <strong>432,210 km</strong></span>
+            </div>
+            <button class="catalog-card-btn card-track-3d" data-target-planet="Earth">Track in 3D →</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. TRAILS: Trajectory Visualizer (ONE Focused Main Container) -->
+    <section id="view-trails" class="view-panel" data-view="trails">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ TRAILS ]</span>
+          <h2 class="view-title-main">Orbital Trajectory Visualizer</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="trails-single-container">
+          <div class="view-intro-hero">
+            <h3 class="view-intro-title">Astrodynamics & Interplanetary Transfer</h3>
+            <p class="view-intro-desc">Spacecraft transit requires adjusting orbital energy rather than straight-line navigation. The Hohmann transfer represents the energy-minimal path between planetary orbits.</p>
+          </div>
+
+          <div class="trails-diagram-panel">
+            <div class="trails-diagram-canvas">
+              <svg width="100%" height="100%" viewBox="0 0 540 200" fill="none">
+                <!-- Sun at center -->
+                <circle cx="270" cy="100" r="14" fill="#ffaa00" filter="drop-shadow(0 0 8px #ffaa00)"/>
+                <text x="270" y="128" text-anchor="middle" fill="#ffaa00" font-family="Orbitron" font-size="8" font-weight="700">SUN</text>
+
+                <!-- Earth Orbit -->
+                <ellipse cx="270" cy="100" rx="90" ry="65" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.2" stroke-dasharray="3 3"/>
+                <circle cx="180" cy="100" r="6" fill="#38bdf8"/>
+                <text x="180" y="88" text-anchor="middle" fill="#38bdf8" font-family="Inter" font-size="9" font-weight="600">Earth Departure</text>
+
+                <!-- Mars Orbit -->
+                <ellipse cx="270" cy="100" rx="200" ry="90" stroke="rgba(249, 115, 22, 0.35)" stroke-width="1.2" stroke-dasharray="4 4"/>
+                <circle cx="470" cy="100" r="5" fill="#f97316"/>
+                <text x="470" y="88" text-anchor="middle" fill="#f97316" font-family="Inter" font-size="9" font-weight="600">Mars Arrival</text>
+
+                <!-- Transfer Arc -->
+                <path d="M 180 100 A 145 92 0 0 1 470 100" stroke="#34d399" stroke-width="2" stroke-dasharray="5 3"/>
+                <text x="325" y="24" text-anchor="middle" fill="#34d399" font-family="Orbitron" font-size="8" font-weight="700">HOHMANN TRANSFER ORBIT</text>
+              </svg>
+            </div>
+
+            <p style="font-size:0.8rem; color:#cbd5e1; line-height:1.5;">A prograde engine burn at Earth periapsis injects the craft into an elliptical trajectory tangent to Mars' orbit. Following a ~7-month unpowered ballistic coast, a second burn circularizes or inserts into Mars orbit.</p>
+          </div>
+
+          <div class="trails-mission-row">
+            <div class="trail-card-simple">
+              <div class="trail-card-title">Apollo Translunar Injection</div>
+              <p class="trail-card-text">A 350-second engine burn accelerates the crew capsule from Earth orbit to 10.8 km/s onto a 3-day cislunar transit arc.</p>
+            </div>
+
+            <div class="trail-card-simple">
+              <div class="trail-card-title">Mars 2020 Hohmann Orbit</div>
+              <p class="trail-card-text">A 470-million-kilometer interplanetary ellipse timed for arrival when Mars meets the spacecraft at orbital rendezvous.</p>
+            </div>
+
+            <div class="trail-card-simple">
+              <div class="trail-card-title">Voyager Planetary Slingshot</div>
+              <p class="trail-card-text">Gravity assists at Jupiter and Saturn robbed orbital energy from the giant worlds, boosting Voyager past Solar escape velocity without fuel.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. WHERE THEY REMAIN: Hardware Atlas -->
+    <section id="view-where-they-remain" class="view-panel" data-view="where-they-remain">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ WHERE THEY REMAIN ]</span>
+          <h2 class="view-title-main">Moon & Mars Hardware Atlas</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="view-intro-hero">
+          <h3 class="view-intro-title">Monuments of Human Exploration</h3>
+          <p class="view-intro-desc">Without atmospheric erosion or moisture, historic spacecraft remain silently preserved on lunar regolith and Martian plains.</p>
+        </div>
+
+        <div class="atlas-grid-simple">
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Apollo 11 LM Eagle</div>
+            <div class="atlas-coords-text">0.674° N, 23.473° E • Moon (Tranquility Base)</div>
+            <p class="atlas-desc-text">The Lunar Module descent stage, retroreflector array, television camera, and commemorative plaque remain at the Apollo 11 landing site.</p>
+          </article>
+
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Perseverance & Ingenuity</div>
+            <div class="atlas-coords-text">18.38° N, 77.58° E • Mars (Jezero Crater)</div>
+            <p class="atlas-desc-text">Active nuclear rover exploring the river fan. Ingenuity rests nearby at Neretva Vallis after completing 72 aerial flights.</p>
+          </article>
+
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Curiosity Rover</div>
+            <div class="atlas-coords-text">4.59° S, 137.44° E • Mars (Gale Crater)</div>
+            <p class="atlas-desc-text">Car-sized scientific laboratory scaling Mount Sharp, examining layered sulfate strata that record ancient Martian climate change.</p>
+          </article>
+
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Opportunity Rover</div>
+            <div class="atlas-coords-text">1.95° S, 354.47° E • Mars (Perseverance Valley)</div>
+            <p class="atlas-desc-text">Operated for 14.5 years across 45 kilometers of Martian surface before a global dust storm ended communication in 2018.</p>
+          </article>
+
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Apollo 15 Lunar Roving Vehicle</div>
+            <div class="atlas-coords-text">26.13° N, 3.63° E • Moon (Hadley Rille)</div>
+            <p class="atlas-desc-text">The first crewed electric rover driven on another world. Left parked 100 meters away from the lunar module after exploration.</p>
+          </article>
+
+          <article class="atlas-card-simple">
+            <div class="atlas-card-title">Viking 1 Lander</div>
+            <div class="atlas-coords-text">22.27° N, 312.05° E • Mars (Chryse Planitia)</div>
+            <p class="atlas-desc-text">The first American lander to safely operate long-term on Mars, transmitting the first surface color photographs in 1976.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PEOPLE: Human Stories -->
+    <section id="view-people" class="view-panel" data-view="people">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ PEOPLE ]</span>
+          <h2 class="view-title-main">Human Stories</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="view-intro-hero">
+          <h3 class="view-intro-title">The Minds Behind the Missions</h3>
+          <p class="view-intro-desc">Spacecraft represent the collective intellect and courage of mathematicians, engineers, and flight directors.</p>
+        </div>
+
+        <div class="people-grid-simple">
+          <article class="person-card-simple">
+            <div class="person-card-name">Margaret Hamilton</div>
+            <div class="person-card-role">Director of Software Engineering • Apollo Project</div>
+            <p class="person-card-quote">"There was no second chance. We had to be right the first time."</p>
+            <p class="person-card-text">Led the team that engineered the Apollo Guidance Computer software. Her priority scheduling design saved the Apollo 11 lunar landing during computer overload.</p>
+          </article>
+
+          <article class="person-card-simple">
+            <div class="person-card-name">Katherine Johnson</div>
+            <div class="person-card-role">Research Mathematician • Mercury & Apollo</div>
+            <p class="person-card-quote">"If she says they're good, then I'm ready to go." — John Glenn</p>
+            <p class="person-card-text">Her calculations of orbital mechanics were critical to the early crewed spaceflights, including Alan Shepard's suborbital arc and John Glenn's orbit.</p>
+          </article>
+
+          <article class="person-card-simple">
+            <div class="person-card-name">Neil Armstrong</div>
+            <div class="person-card-role">Commander • Apollo 11</div>
+            <p class="person-card-quote">"That's one small step for man, one giant leap for mankind."</p>
+            <p class="person-card-text">Aeronautical engineer and test pilot who took manual control of the lunar module Eagle over boulder terrain with under 30 seconds of fuel remaining.</p>
+          </article>
+
+          <article class="person-card-simple">
+            <div class="person-card-name">Gene Kranz</div>
+            <div class="person-card-role">Flight Director • Apollo 11 & 13</div>
+            <p class="person-card-quote">"Failure is not an option."</p>
+            <p class="person-card-text">Lead flight director during the Apollo 11 lunar landing and commander of the rescue mission that brought Apollo 13 astronauts safely home.</p>
+          </article>
+
+          <article class="person-card-simple">
+            <div class="person-card-name">Carl Sagan</div>
+            <div class="person-card-role">Astronomer • Mariner, Viking & Voyager</div>
+            <p class="person-card-quote">"Somewhere, something incredible is waiting to be known."</p>
+            <p class="person-card-text">Co-creator of the Voyager Golden Record and advocate for planetary exploration who conceived the historic "Pale Blue Dot" photograph.</p>
+          </article>
+
+          <article class="person-card-simple">
+            <div class="person-card-name">Dr. Katie Bouman</div>
+            <div class="person-card-role">Computer Scientist • Event Horizon Telescope</div>
+            <p class="person-card-quote">"It required the amazing talent of scientists from all over the globe."</p>
+            <p class="person-card-text">Led the development of computational imaging algorithms that synthesized global radio telescope data to reveal the first black hole shadow.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. LEARN & PLAY: Quizzes & Simulators -->
+    <section id="view-learn" class="view-panel" data-view="learn">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ LEARN & PLAY ]</span>
+          <h2 class="view-title-main">Quizzes & Simulators</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="view-intro-hero">
+          <h3 class="view-intro-title">Orbital Mechanics Knowledge Check</h3>
+          <p class="view-intro-desc">Test your intuition about orbital speeds, transfer burns, and gravitational characteristics.</p>
+        </div>
+
+        <div class="learn-grid-simple">
+          <div class="learn-card-simple">
+            <h4 style="font-family:Orbitron; font-size:0.9rem; color:#fff;">Cosmic Knowledge Challenge</h4>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <span style="font-size:0.8rem; font-weight:600; color:#38bdf8;">1. What is a Hohmann Transfer Orbit?</span>
+              <div class="quiz-options-group" style="display:flex; flex-direction:column; gap:5px;">
+                <button class="quiz-option-btn" data-correct="false">A straight laser beam path pointing directly at the planet.</button>
+                <button class="quiz-option-btn" data-correct="true">An elliptical orbit using two engine burns to transfer with minimal fuel.</button>
+                <button class="quiz-option-btn" data-correct="false">An orbit where a spacecraft hovers permanently above a pole.</button>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+              <span style="font-size:0.8rem; font-weight:600; color:#38bdf8;">2. Which planet orbits at the fastest speed?</span>
+              <div class="quiz-options-group" style="display:flex; flex-direction:column; gap:5px;">
+                <button class="quiz-option-btn" data-correct="true">Mercury (~47.4 km/s, closest to the Sun's gravity well).</button>
+                <button class="quiz-option-btn" data-correct="false">Jupiter (because of its enormous mass).</button>
+                <button class="quiz-option-btn" data-correct="false">Earth (29.78 km/s).</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="learn-card-simple">
+            <h4 style="font-family:Orbitron; font-size:0.9rem; color:#fff;">Planetary Gravity Comparison</h4>
+            <p style="font-size:0.76rem; color:#94a3b8;">If you can jump 0.5 meters high on Earth (1.0 g), how high could you leap elsewhere?</p>
+
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; font-size:0.78rem;">
+                <span>Moon (0.166 g)</span>
+                <strong style="color:#38bdf8; font-family:Orbitron;">3.0 Meters (6x)</strong>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; font-size:0.78rem;">
+                <span>Mars (0.378 g)</span>
+                <strong style="color:#f97316; font-family:Orbitron;">1.3 Meters (2.6x)</strong>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; font-size:0.78rem;">
+                <span>Jupiter (2.528 g)</span>
+                <strong style="color:#c084fc; font-family:Orbitron;">0.2 Meters (0.4x)</strong>
+              </div>
+            </div>
+
+            <p style="font-size:0.74rem; color:#94a3b8; margin-top:8px;">💡 Select any planet in the bottom dock or 3D view to inspect full physical telemetry and atmospheric composition.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SOURCES: Citations & Brief -->
+    <section id="view-sources" class="view-panel" data-view="sources">
+      <div class="view-panel-header">
+        <div class="view-breadcrumb">
+          <span class="view-system-pill">[ SOURCES ]</span>
+          <h2 class="view-title-main">Citations & Brief</h2>
+        </div>
+        <button class="view-close-btn">✕ Return to Orbit</button>
+      </div>
+
+      <div class="view-panel-body">
+        <div class="view-intro-hero">
+          <h3 class="view-intro-title">Scientific Provenance & Technology Stack</h3>
+          <p class="view-intro-desc">Developed for celestial observation and educational exploration using authentic NASA orbital telemetry.</p>
+        </div>
+
+        <div class="sources-card-simple">
+          <h4 style="font-family:Orbitron; font-size:0.88rem; color:#fff; margin-bottom:8px;">NASA Data Resources</h4>
+          <p style="font-size:0.76rem; color:#94a3b8; line-height:1.5;">Orbital distances, periods, eccentricities, and planetary radii are based on data from the <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" rel="noopener">NASA JPL Horizons On-Line Ephemeris System</a> and the <a href="https://pds.nasa.gov/" target="_blank" rel="noopener">NASA Planetary Data System (PDS)</a>.</p>
+        </div>
+
+        <div class="sources-card-simple">
+          <h4 style="font-family:Orbitron; font-size:0.88rem; color:#fff; margin-bottom:8px;">Open Source Graphics Engine</h4>
+          <p style="font-size:0.76rem; color:#94a3b8; line-height:1.5;">Built using <a href="https://threejs.org/" target="_blank" rel="noopener">Three.js (WebGL)</a> for custom cel/toon shaders, instanced asteroid belts, and real-time astronomical coordinate projection.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
 
   <!-- Minimal Hover Tooltip (Small and unobtrusive) -->
   <div id="hover-tooltip" class="hover-tooltip hidden">
@@ -237,6 +701,7 @@
     <button class="dock-dot-btn" data-planet="Neptune" title="Neptune"><span class="dot neptune-dot"></span><span>Nep</span></button>
   </nav>
 
+  <script src="js/modules/navigation.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

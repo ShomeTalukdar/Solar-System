@@ -1,0 +1,932 @@
+/* ==========================================================================
+   MINIMAL SPACECRAFT OBSERVATION INTERFACE // NAVIGATION & HUD
+   Design Philosophy: "A spacecraft observation window with a minimal holographic computer interface."
+   Primary focus: 85-90% 3D Solar System view. UI is secondary and quiet.
+   ========================================================================== */
+
+:root {
+  --space-bg-card: rgba(5, 8, 22, 0.65);
+  --space-bg-card-hover: rgba(11, 18, 40, 0.8);
+  --space-border: rgba(255, 255, 255, 0.10);
+  --space-border-focus: rgba(56, 189, 248, 0.4);
+  
+  --accent-cyan: #38bdf8;
+  --accent-blue: #3b82f6;
+  --accent-orange: #f97316;
+  --accent-green: #10b981;
+
+  --font-orbitron: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==========================================================================
+   1. Subtle Canvas Blur Layer (Only active when in non-Explore views)
+   ========================================================================== */
+#canvas-blur-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  backdrop-filter: blur(0px) brightness(1);
+  -webkit-backdrop-filter: blur(0px) brightness(1);
+  background: rgba(5, 8, 22, 0);
+  transition: opacity 0.28s ease, backdrop-filter 0.28s ease, background 0.28s ease;
+}
+
+body.in-view-overlay #canvas-blur-layer {
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(10px) brightness(0.65);
+  -webkit-backdrop-filter: blur(10px) brightness(0.65);
+  background: rgba(5, 8, 22, 0.55);
+}
+
+/* Hide Explore-specific HUD when in non-Explore views */
+body.in-view-overlay .minimal-dock,
+body.in-view-overlay .floating-controls-bar,
+body.in-view-overlay #radar-widget,
+body.in-view-overlay #hover-tooltip {
+  display: none !important;
+}
+
+/* When a planet/moon is selected in Explore, hide the radar widget to avoid clutter */
+body.panel-open #radar-widget {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ==========================================================================
+   2. Top HUD Bar (Extremely Minimal)
+   ========================================================================== */
+.minimal-header {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--space-bg-card);
+  border: 1px solid var(--space-border);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.brand-title {
+  font-family: var(--font-orbitron);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.live-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-orbitron);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-green);
+  padding-left: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+/* Minimal Search Launcher Button */
+.hud-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--space-bg-card);
+  border: 1px solid var(--space-border);
+  padding: 6px 11px;
+  border-radius: 9999px;
+  color: #cbd5e1;
+  font-family: var(--font-inter);
+  font-size: 0.72rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: all 0.18s ease;
+}
+
+.hud-search-btn:hover {
+  background: rgba(14, 26, 52, 0.8);
+  border-color: var(--space-border-focus);
+  color: #ffffff;
+}
+
+.hud-search-icon {
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+}
+
+.hud-search-kbd {
+  font-family: var(--font-orbitron);
+  font-size: 0.52rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 2px;
+}
+
+/* ==========================================================================
+   3. Collapsible Left Navigation Rail (Narrow vertical icon rail by default)
+   ========================================================================== */
+.left-nav-rail {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 18px;
+  width: 44px;
+  background: var(--space-bg-card);
+  border: 1px solid var(--space-border);
+  border-radius: 22px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 30;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
+}
+
+/* On hover or click to expand, expands smoothly */
+.left-nav-rail:hover,
+.left-nav-rail.expanded {
+  width: 184px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.rail-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.rail-item.active {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+}
+
+.rail-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-label {
+  font-family: var(--font-inter);
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-left: 9px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.left-nav-rail:hover .rail-label,
+.left-nav-rail.expanded .rail-label {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   4. Minimal Mission Radar HUD Card (Compact bottom-left widget)
+   ========================================================================== */
+.radar-card {
+  position: fixed;
+  bottom: 24px;
+  left: 20px;
+  width: 270px;
+  background: var(--space-bg-card);
+  border: 1px solid var(--space-border);
+  border-radius: 12px;
+  padding: 11px 13px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 28;
+  color: #f8fafc;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.radar-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.radar-tag {
+  font-family: var(--font-orbitron);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+}
+
+.radar-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.radar-arrow-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-arrow-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+.radar-mission-name {
+  font-family: var(--font-orbitron);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.radar-data-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+
+.radar-target-pill {
+  font-family: var(--font-orbitron);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  text-transform: uppercase;
+}
+
+.radar-sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.65rem;
+}
+
+.radar-distance-text {
+  font-family: var(--font-orbitron);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.radar-fate-text {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-bottom: 9px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radar-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  color: #93c5fd;
+  font-family: var(--font-orbitron);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.radar-explore-btn:hover {
+  background: rgba(59, 130, 246, 0.38);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   5. Clean View Overlay Container (Only ONE active at a time)
+   ========================================================================== */
+#views-container {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s ease;
+}
+
+#views-container.active {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.view-panel {
+  width: calc(100vw - 120px);
+  max-width: 1040px;
+  height: calc(100vh - 80px);
+  max-height: 760px;
+  background: rgba(5, 8, 22, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--space-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: panelFade 0.22s ease-out;
+}
+
+.view-panel.active {
+  display: flex;
+}
+
+@keyframes panelFade {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.view-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.view-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.view-system-pill {
+  font-family: var(--font-orbitron);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.view-title-main {
+  font-family: var(--font-orbitron);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.view-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-family: var(--font-inter);
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.view-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.view-panel-body {
+  flex: 1;
+  padding: 26px 30px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
+}
+
+.view-intro-hero {
+  margin-bottom: 22px;
+  max-width: 780px;
+}
+
+.view-intro-title {
+  font-family: var(--font-orbitron);
+  font-size: 1.05rem;
+  color: #f8fafc;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.view-intro-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   6. View Specific Modules (Focused, Calm, Low Density)
+   ========================================================================== */
+
+/* --- ARCHIVE VIEW --- */
+.archive-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.archive-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 380px;
+}
+
+.archive-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  background: rgba(5, 8, 22, 0.6);
+  border: 1px solid var(--space-border);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: var(--font-inter);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.archive-search-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.archive-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.archive-filter-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-chip {
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--space-border);
+  border-radius: 6px;
+  color: #94a3b8;
+  font-family: var(--font-orbitron);
+  font-size: 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-chip:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-chip.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+}
+
+.mission-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.mission-catalog-card {
+  background: rgba(5, 8, 22, 0.55);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.mission-catalog-card:hover {
+  border-color: var(--space-border-focus);
+  transform: translateY(-1px);
+}
+
+.catalog-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.catalog-card-title {
+  font-family: var(--font-orbitron);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.catalog-card-sub {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.catalog-card-body {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.catalog-card-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.catalog-card-meta strong {
+  color: var(--accent-cyan);
+  font-family: var(--font-orbitron);
+  font-size: 0.68rem;
+}
+
+.catalog-card-btn {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: var(--font-orbitron);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s ease;
+}
+
+.catalog-card-btn:hover {
+  background: rgba(59, 130, 246, 0.32);
+  border-color: var(--accent-cyan);
+}
+
+/* --- TRAILS VIEW (ONE Focused Container) --- */
+.trails-single-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.trails-diagram-panel {
+  background: rgba(5, 8, 22, 0.6);
+  border: 1px solid var(--space-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.trails-diagram-canvas {
+  width: 100%;
+  height: 200px;
+  background: radial-gradient(circle at center, rgba(14, 26, 52, 0.6), rgba(5, 8, 22, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trails-mission-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.trail-card-simple {
+  background: rgba(5, 8, 22, 0.5);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.trail-card-title {
+  font-family: var(--font-orbitron);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.trail-card-text {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+/* --- WHERE THEY REMAIN (Hardware Atlas) --- */
+.atlas-grid-simple {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.atlas-card-simple {
+  background: rgba(5, 8, 22, 0.55);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atlas-card-title {
+  font-family: var(--font-orbitron);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.atlas-coords-text {
+  font-family: var(--font-orbitron);
+  font-size: 0.68rem;
+  color: var(--accent-orange);
+}
+
+.atlas-desc-text {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+/* --- PEOPLE VIEW --- */
+.people-grid-simple {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.person-card-simple {
+  background: rgba(5, 8, 22, 0.55);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.person-card-name {
+  font-family: var(--font-orbitron);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.person-card-role {
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  font-weight: 500;
+}
+
+.person-card-quote {
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  font-style: italic;
+  line-height: 1.4;
+  border-left: 2px solid var(--accent-cyan);
+  padding-left: 8px;
+  margin: 2px 0;
+}
+
+.person-card-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+/* --- LEARN & PLAY VIEW --- */
+.learn-grid-simple {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.learn-card-simple {
+  background: rgba(5, 8, 22, 0.55);
+  border: 1px solid var(--space-border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quiz-option-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--space-border);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-family: var(--font-inter);
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quiz-option-btn:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-cyan);
+}
+
+.quiz-option-btn.correct {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--accent-green);
+  color: #a7f3d0;
+}
+
+.quiz-option-btn.wrong {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+/* --- SOURCES VIEW --- */
+.sources-card-simple {
+  background: rgba(5, 8, 22, 0.55);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.sources-card-simple a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.sources-card-simple a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   7. Mobile & Small Screen Adaptations
+   ========================================================================== */
+@media (max-width: 768px) {
+  .left-nav-rail {
+    top: auto;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    height: 44px;
+    flex-direction: row;
+    padding: 4px 8px;
+    border-radius: 22px;
+  }
+
+  .left-nav-rail:hover,
+  .left-nav-rail.expanded {
+    width: auto;
+  }
+
+  .rail-label {
+    display: none !important;
+  }
+
+  .rail-item {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .radar-card {
+    bottom: 64px;
+    left: 10px;
+    width: calc(100vw - 20px);
+    max-width: 320px;
+  }
+
+  .view-panel {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 40px);
+    border-radius: 12px;
+  }
+
+  .view-panel-header {
+    padding: 12px 16px;
+  }
+
+  .view-panel-body {
+    padding: 16px;
+  }
+
+  .trails-mission-row,
+  .learn-grid-simple {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1131,6 +1131,7 @@ const TextureGenerator = {
 // ============================================================================
 class SolarSystemApp {
   constructor() {
+    window.solarApp = this;
     this.container = document.getElementById('canvas-container');
     this.isPaused = false;
     this.timeSpeed = 1.0;
@@ -1867,6 +1868,11 @@ class SolarSystemApp {
   }
 
   onPointerMove(e) {
+    if (window.navigationShell && window.navigationShell.currentView !== 'explore') {
+      if (this.tooltip) this.tooltip.classList.add('hidden');
+      return;
+    }
+
     this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -1896,7 +1902,8 @@ class SolarSystemApp {
   }
 
   onPointerClick(e) {
-    if (e.target.closest('.minimal-header, .slide-panel, .minimal-dock, .floating-controls-bar, #audio-toggle')) return;
+    if (e.target.closest('.minimal-header, .slide-panel, .minimal-dock, .floating-controls-bar, #audio-toggle, #left-nav, #radar-widget, #views-container, #mission-control-hud, .mission-control-btn, .hud-search-btn, .top-right-hud')) return;
+    if (window.navigationShell && window.navigationShell.currentView !== 'explore') return;
 
     // Reject camera rotation drag/pinch gestures (threshold 8px)
     const dragDistance = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
