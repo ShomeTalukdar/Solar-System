@@ -112,22 +112,14 @@ class NavigationShell {
 
   // --- 1. VIEW ROUTER & NAVIGATION ---
   setupViewSwitcher() {
-    // Collapsible navigation rail item clicks
+    // Navigation rail button clicks
     const railButtons = document.querySelectorAll('.rail-item');
     railButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const view = btn.dataset.view;
         this.playSound('click');
-
-        // If clicking the already active overlay view, toggle back to Explore orbit
-        if (this.currentView === view && view !== 'explore') {
-          this.switchView('explore');
-        } else {
-          this.switchView(view);
-        }
-
-        if (this.leftNav) this.leftNav.classList.remove('expanded');
+        this.switchView(view);
       });
     });
 
@@ -427,7 +419,20 @@ class NavigationShell {
   }
 }
 
-// Instantiate globally
-window.addEventListener('DOMContentLoaded', () => {
-  window.navigationShell = new NavigationShell();
-});
+// Global initializer function
+function initNavigationShell() {
+  if (!window.navigationShell) {
+    window.navigationShell = new NavigationShell();
+    window.switchSolarView = (view, payload) => {
+      if (window.navigationShell) {
+        window.navigationShell.switchView(view, payload);
+      }
+    };
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNavigationShell);
+} else {
+  initNavigationShell();
+}

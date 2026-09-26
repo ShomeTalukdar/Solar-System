@@ -68,7 +68,7 @@ body.panel-open #radar-widget {
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 90;
+  z-index: 9990 !important;
   pointer-events: none;
 }
 
@@ -173,11 +173,11 @@ body.panel-open #radar-widget {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 100; /* Always above overlay view panels so navigation is never blocked */
+  z-index: 9999 !important; /* Topmost layer so navigation is always responsive */
   overflow: hidden;
   transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   user-select: none;
-  pointer-events: auto;
+  pointer-events: auto !important;
 }
 
 /* On hover or click to expand, expands smoothly */
@@ -202,7 +202,8 @@ body.panel-open #radar-widget {
   white-space: nowrap;
   outline: none;
   transition: all 0.15s ease;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  user-select: none;
 }
 
 .rail-item:hover {
@@ -222,7 +223,7 @@ body.panel-open #radar-widget {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 .rail-label {
@@ -232,7 +233,7 @@ body.panel-open #radar-widget {
   letter-spacing: 0.01em;
   margin-left: 9px;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   transition: opacity 0.18s ease;
 }
 
@@ -388,13 +389,13 @@ body.panel-open #radar-widget {
 #views-container {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 500 !important;
   pointer-events: none;
   opacity: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 72px;
+  padding-left: 76px;
   padding-right: 20px;
   box-sizing: border-box;
   transition: opacity 0.25s ease;
