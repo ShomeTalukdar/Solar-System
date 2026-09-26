@@ -115,10 +115,18 @@ class NavigationShell {
     // Collapsible navigation rail item clicks
     const railButtons = document.querySelectorAll('.rail-item');
     railButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const view = btn.dataset.view;
         this.playSound('click');
-        this.switchView(view);
+
+        // If clicking the already active overlay view, toggle back to Explore orbit
+        if (this.currentView === view && view !== 'explore') {
+          this.switchView('explore');
+        } else {
+          this.switchView(view);
+        }
+
         if (this.leftNav) this.leftNav.classList.remove('expanded');
       });
     });
@@ -126,11 +134,32 @@ class NavigationShell {
     // Close buttons inside each view panel
     const closeButtons = document.querySelectorAll('.view-close-btn');
     closeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.playSound('close');
         this.switchView('explore');
       });
     });
+
+    // Backdrop click: Clicking outside the active panel on #views-container returns to Explore
+    if (this.viewsContainer) {
+      this.viewsContainer.addEventListener('click', (e) => {
+        if (e.target === this.viewsContainer) {
+          this.playSound('close');
+          this.switchView('explore');
+        }
+      });
+    }
+
+    // Blur layer click returns to Explore
+    if (this.canvasBlurLayer) {
+      this.canvasBlurLayer.addEventListener('click', () => {
+        if (this.currentView !== 'explore') {
+          this.playSound('close');
+          this.switchView('explore');
+        }
+      });
+    }
   }
 
   switchView(viewName, payload = null) {

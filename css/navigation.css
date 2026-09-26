@@ -68,7 +68,7 @@ body.panel-open #radar-widget {
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 25;
+  z-index: 90;
   pointer-events: none;
 }
 
@@ -173,10 +173,11 @@ body.panel-open #radar-widget {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 30;
+  z-index: 100; /* Always above overlay view panels so navigation is never blocked */
   overflow: hidden;
   transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   user-select: none;
+  pointer-events: auto;
 }
 
 /* On hover or click to expand, expands smoothly */
@@ -201,6 +202,7 @@ body.panel-open #radar-widget {
   white-space: nowrap;
   outline: none;
   transition: all 0.15s ease;
+  pointer-events: auto;
 }
 
 .rail-item:hover {
@@ -220,6 +222,7 @@ body.panel-open #radar-widget {
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .rail-label {
@@ -236,7 +239,6 @@ body.panel-open #radar-widget {
 .left-nav-rail:hover .rail-label,
 .left-nav-rail.expanded .rail-label {
   opacity: 1;
-  pointer-events: auto;
 }
 
 /* ==========================================================================
@@ -386,12 +388,15 @@ body.panel-open #radar-widget {
 #views-container {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 50;
   pointer-events: none;
   opacity: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-left: 72px;
+  padding-right: 20px;
+  box-sizing: border-box;
   transition: opacity 0.25s ease;
 }
 
@@ -915,6 +920,12 @@ body.panel-open #radar-widget {
     width: calc(100vw - 20px);
     height: calc(100vh - 40px);
     border-radius: 12px;
+  }
+
+  #views-container {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 64px;
   }
 
   .view-panel-header {
