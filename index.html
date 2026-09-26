@@ -18,6 +18,15 @@
   <link rel="stylesheet" href="style.css?v=2.1">
   <link rel="stylesheet" href="css/navigation.css?v=2.1">
   
+  <!-- Critical Infallible Stacking Styles -->
+  <style>
+    #left-nav, .left-nav-rail { z-index: 99999 !important; pointer-events: auto !important; }
+    .rail-item { pointer-events: auto !important; cursor: pointer !important; }
+    .rail-icon, .rail-label { pointer-events: none !important; }
+    #views-container { z-index: 500 !important; }
+    #canvas-blur-layer { z-index: 15 !important; }
+  </style>
+  
   <!-- Three.js, OrbitControls and Tween.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -90,31 +99,31 @@
 
   <!-- Collapsible Left Navigation Rail (Narrow vertical icon rail by default) -->
   <nav id="left-nav" class="left-nav-rail" aria-label="System Navigation">
-    <button class="rail-item active" data-view="explore" title="Explore 3D Orbit">
+    <button class="rail-item active" data-view="explore" onclick="window.switchSolarView('explore')" title="Explore 3D Orbit">
       <span class="rail-icon">🪐</span>
       <span class="rail-label">Explore</span>
     </button>
-    <button class="rail-item" data-view="archive" title="Mission Catalog">
+    <button class="rail-item" data-view="archive" onclick="window.switchSolarView('archive')" title="Mission Catalog">
       <span class="rail-icon">📁</span>
       <span class="rail-label">Archive</span>
     </button>
-    <button class="rail-item" data-view="trails" title="Orbital Trajectory Visualizer">
+    <button class="rail-item" data-view="trails" onclick="window.switchSolarView('trails')" title="Orbital Trajectory Visualizer">
       <span class="rail-icon">🛰️</span>
       <span class="rail-label">Trails</span>
     </button>
-    <button class="rail-item" data-view="where-they-remain" title="Moon & Mars Hardware Atlas">
+    <button class="rail-item" data-view="where-they-remain" onclick="window.switchSolarView('where-they-remain')" title="Moon & Mars Hardware Atlas">
       <span class="rail-icon">📍</span>
       <span class="rail-label">Where They Remain</span>
     </button>
-    <button class="rail-item" data-view="people" title="Human Stories">
+    <button class="rail-item" data-view="people" onclick="window.switchSolarView('people')" title="Human Stories">
       <span class="rail-icon">👥</span>
       <span class="rail-label">People</span>
     </button>
-    <button class="rail-item" data-view="learn" title="Learn & Play">
+    <button class="rail-item" data-view="learn" onclick="window.switchSolarView('learn')" title="Learn & Play">
       <span class="rail-icon">🎮</span>
       <span class="rail-label">Learn & Play</span>
     </button>
-    <button class="rail-item" data-view="sources" title="Sources & Citations">
+    <button class="rail-item" data-view="sources" onclick="window.switchSolarView('sources')" title="Sources & Citations">
       <span class="rail-icon">ℹ️</span>
       <span class="rail-label">Sources</span>
     </button>

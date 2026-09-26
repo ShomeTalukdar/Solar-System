@@ -423,13 +423,17 @@ class NavigationShell {
 function initNavigationShell() {
   if (!window.navigationShell) {
     window.navigationShell = new NavigationShell();
-    window.switchSolarView = (view, payload) => {
-      if (window.navigationShell) {
-        window.navigationShell.switchView(view, payload);
-      }
-    };
   }
 }
+
+window.switchSolarView = function(view, payload) {
+  if (!window.navigationShell) {
+    initNavigationShell();
+  }
+  if (window.navigationShell) {
+    window.navigationShell.switchView(view, payload);
+  }
+};
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initNavigationShell);
