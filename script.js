@@ -2266,12 +2266,14 @@ class SolarSystemApp {
       });
     }
 
-    if (this.focusedObject && this.isTracking) {
-      const targetPos = new THREE.Vector3();
-      this.focusedObject.getWorldPosition(targetPos);
-      const camOffset = this.camera.position.clone().sub(this.controls.target);
-      this.controls.target.copy(targetPos);
-      this.camera.position.copy(targetPos).add(camOffset);
+    if (!this.trajectorySimulator || !this.trajectorySimulator.isActive) {
+      if (this.focusedObject && this.isTracking) {
+        const targetPos = new THREE.Vector3();
+        this.focusedObject.getWorldPosition(targetPos);
+        const camOffset = this.camera.position.clone().sub(this.controls.target);
+        this.controls.target.copy(targetPos);
+        this.camera.position.copy(targetPos).add(camOffset);
+      }
     }
 
     this.controls.update();
