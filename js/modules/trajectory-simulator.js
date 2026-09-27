@@ -37,11 +37,17 @@ class TrajectorySimulator {
     this.trajectoryCurve = null;
     this.trajectoryPoints = [];
     this.landingBeacon = null;
+    this.dustRing = null;
+    this.hasDustRingTriggered = false;
     this.chalkLander = null;
     this.hasLanderPopped = false;
     this.stagedBooster = null;
     this.isStaged = false;
     this.waypointGroup = null;
+    this.probeAddonGroup = null;
+    this.rocketNoseGroup = null;
+    this.rocketFinGroup = null;
+    this.secondaryChalkLine = null;
 
     // DOM references
     this.hudElement = null;
@@ -64,16 +70,39 @@ class TrajectorySimulator {
         color: 0x38bdf8,
         colorHex: '#38BDF8',
         accentColor: '#38BDF8',
-        landingSite: 'Mare Tranquillitatis',
+        landingSite: 'Mare Tranquillitatis (Tranquility Base)',
         landingCoords: '0.674° N, 23.473° E',
         landingDate: 'July 20, 1969',
         solsActive: '8 days total (21.6 hrs on lunar surface)',
-        discardReason: 'The Apollo 11 Lunar Module descent stage served as a stationary launch platform for the ascent stage, left behind intentionally to save return payload weight.',
-        weatheringInfo: 'Exposed to unfiltered solar ultraviolet radiation, micro-meteorite sandblasting, and thermal swings from -170°C to +120°C for over half a century.',
+        discardReason: 'Why Abandoned: The Lunar Module descent stage served as a stationary launch pad for the ascent stage. Leaving the descent engine, lunar roving vehicle, life-support backpacks (PLSS), and science experiments behind was crucial—every kilogram abandoned on the Moon saved critical propellant needed to return 21.55 kg of lunar rock samples back to Earth.',
+        weatheringInfo: 'Over 55+ years of space weathering: Unfiltered ultraviolet radiation has bleached the commemorative nylon flag, micro-meteorite bombardment continually pits the thermal Kapton foil, and extreme thermal cycling (-150°C night to +120°C day) causes constant structural expansion and contraction.',
         legacy: 'Humanity\'s first footprint on another celestial body. The retroreflector experiment remains active today, bounced by lasers from Earth to measure lunar drift.',
         distanceTotalKm: 384400,
         transitDurationStr: '3 Days, 3 Hours, 49 Mins',
         maxVelocityKmS: 11.2,
+        scientificPayloads: [
+          {
+            name: 'Laser Ranging Retroreflector',
+            acronym: 'LRRR',
+            purpose: 'Array of 100 quartz corner-cube prisms that reflect ground laser pulses back to Earth, measuring Moon distance to millimeter precision and tracking lunar orbital drift.'
+          },
+          {
+            name: 'Passive Seismic Experiment',
+            acronym: 'PSEP',
+            purpose: 'Solar-powered seismometer that recorded moonquakes, meteoroid impacts, and tidal crustal stresses to determine internal lunar structure.'
+          },
+          {
+            name: 'Early Apollo Scientific Experiments Package',
+            acronym: 'EASEP',
+            purpose: 'Contained the Solar Wind Composition foil sheet deployed by Buzz Aldrin to trap noble gas ions directly emitted from the Sun.'
+          }
+        ],
+        scorecard: {
+          surfaceSols: '21.6 Hours (1 Lunar Day)',
+          distanceTraversed: '250 meters',
+          massLeftBehind: '2,240 kg (Descent stage & gear)',
+          sampleMassReturned: '21.55 kg (Priceless lunar regolith)'
+        },
         waypoints: [
           { t: 0.15, label: 'EARTH DEPARTURE / TLI' },
           { t: 0.50, label: 'CISLUNAR MID-COURSE' },
@@ -82,38 +111,38 @@ class TrajectorySimulator {
         phases: [
           {
             threshold: 0.15,
-            name: 'PHASE 1: SATURN V LIFTOFF & MAX-Q',
+            name: 'PHASE 1: LIFTOFF & ESCAPE PHYSICS',
             tag: 'LIFTOFF',
-            hazard: 'Structural Max-Q dynamic pressure at 13.5 km altitude. Saturn V generates 34.5 million Newtons of thrust.',
-            details: 'Five F-1 engines burn 15 metric tons of kerosene and liquid oxygen per second. The vehicle clears Earth\'s dense troposphere onto an elliptical parking orbit.'
+            hazard: 'Saturn V 3-stage vehicle generates 34.5 million Newtons of thrust, consuming 15 metric tons of RP-1 and LOX per second. Endures structural Max-Q dynamic pressure at 13.5 km altitude.',
+            details: 'Five colossal Rocketdyne F-1 engines accelerate the 3,000-tonne Saturn V through Earth\'s dense atmosphere. S-IC and S-II staging is followed by an S-IVB burn inserting Apollo into an Earth parking orbit at 7.8 km/s (28,000 km/h).'
           },
           {
             threshold: 0.35,
-            name: 'PHASE 2: TRANSLUNAR INJECTION (TLI)',
+            name: 'PHASE 2: TRANSLUNAR INJECTION (TLI) & FREE-RETURN',
             tag: 'TLI BURN',
-            hazard: 'S-IVB third-stage reignition. A 350-second burn boosts crew capsule to 39,000 km/h escape velocity.',
-            details: 'Translunar injection sends Apollo onto a free-return trajectory. If lunar orbit insertion fails, lunar gravity automatically slingshots the craft back to Earth.'
+            hazard: 'Re-ignition of S-IVB third stage in vacuum. Critical astrodynamic commit: free-return figure-8 trajectory ensures crew survival without SPS engine burn.',
+            details: 'A 350-second TLI burn boosts velocity to 39,000 km/h escape speed. Apollo enters a figure-8 free-return loop: if the Service Propulsion System (SPS) fails, lunar gravity automatically loops the spacecraft around the Moon and slingshots it safely back to Earth without burning propellant.'
           },
           {
             threshold: 0.75,
-            name: 'PHASE 3: CISLUNAR TRANSIT & RADIATION',
+            name: 'PHASE 3: CISLUNAR CRUISE & SPACE HAZARDS',
             tag: 'COAST',
-            hazard: 'Traversing Van Allen radiation belts. Barbecue-roll rotation (PTC) at 3 revs/hr balances extreme solar heating.',
-            details: 'Unpowered ballistic cruise across the Earth-Moon gravitational null point. Star-sighting sextant navigations confirm trajectory alignment.'
+            hazard: 'Crossing the lethal Van Allen radiation belts; extreme thermal gradients require Passive Thermal Control (PTC) "Barbecue Roll" at 3 revolutions per hour.',
+            details: 'Unpowered ballistic cruise across the 384,400 km gravitational null point. The PTC slow-roll prevents one side from freezing (-150°C) while the other bakes (+120°C). Astronauts verify trajectory with navigational sextant star-sightings.'
           },
           {
             threshold: 0.90,
-            name: 'PHASE 4: LUNAR DESCENT & PDI',
+            name: 'PHASE 4: POWERED DESCENT INITIATION & THE 1202 ALARM',
             tag: 'DESCENT',
-            hazard: 'Powered Descent Initiation (PDI). 1201/1202 computer overload alarms sound inside the Eagle cockpit.',
-            details: 'Neil Armstrong takes manual attitude control over boulder-strewn West Crater, touching down with less than 25 seconds of descent fuel remaining.'
+            hazard: 'Powered Descent Initiation (PDI). Historic 1201 and 1202 radar computer overload alarms sound inside the Lunar Module Eagle as radar data floods the AGC memory.',
+            details: 'Priority scheduling software keeps attitude thrusters functioning. Neil Armstrong takes manual semi-attitude control over boulder-strewn West Crater, touching down with only 25 seconds of descent propellant remaining.'
           },
           {
             threshold: 1.0,
-            name: 'PHASE 5: TRANQUILITY BASE (RESTING SITE)',
+            name: 'PHASE 5: TRANQUILITY BASE & WHERE THEY REMAIN',
             tag: 'LANDED',
-            hazard: 'Stationary resting site on lunar regolith. Desolation, solar radiation, vacuum.',
-            details: 'Eagle descent stage, commemorative plaque, and United States flag remain undisturbed on the sea of tranquility.'
+            hazard: 'The Apollo 11 descent stage, commemorative plaque, and scientific experiments remain undisturbed under extreme hard vacuum.',
+            details: 'Every kilogram left on the Moon saved critical fuel to return 21.55 kg of lunar rock samples. Over 55+ years, unfiltered solar UV radiation has bleached the materials while micrometeoroid impacts and thermal cycling (-150°C to +120°C) slowly weather the historic artifacts.'
           }
         ]
       },
@@ -180,69 +209,105 @@ class TrajectorySimulator {
           }
         ]
       },
-      'voyager-1': {
-        id: 'voyager-1',
-        name: 'Voyager 1',
-        callsign: 'Voyager Interstellar',
+      'voyager-1-2': {
+        id: 'voyager-1-2',
+        name: 'Voyager 1 & 2',
+        callsign: 'Voyager 1 (VGR-1) & Voyager 2 (VGR-2)',
         targetBody: 'Deep Space',
-        targetPlanet: 'Jupiter',
+        targetPlanet: 'Interstellar',
         craftType: 'probe',
         color: 0xfde047,
         colorHex: '#FDE047',
         accentColor: '#FDE047',
-        landingSite: 'Interstellar Space (Heliopause)',
-        landingCoords: 'Declination +12° 02\', R.A. 17h 14m',
+        landingSite: 'Interstellar Space (Constellation Ophiuchus)',
+        landingCoords: 'Declination +12° 02\', R.A. 17h 14m (24.4B km / 163.1 AU)',
         landingDate: 'Crossed Heliopause August 25, 2012',
         solsActive: '48+ Years (Still Transmitting)',
-        discardReason: 'Titan IIIE Centaur booster, propulsion module, and shroud detached as the probe exceeded solar escape velocity.',
-        weatheringInfo: 'Drifting through galactic cosmic rays and cold interstellar plasma at 3 Kelvin (-270°C). Micrometeoroid impacts pit its gold-coated bus.',
-        legacy: 'Farthest human-made object in history (over 24 billion km from Earth). Carries the Golden Record containing Earth sounds, images, and greetings.',
-        distanceTotalKm: 24300000000,
-        transitDurationStr: '48 Years, 6 Months',
+        discardReason: 'Titan IIIE Centaur booster stages detached in solar orbit. The probe carries the Golden Record into interstellar space.',
+        weatheringInfo: 'Drifting through galactic cosmic rays and cold interstellar plasma at 3 Kelvin (-270°C). Micrometeoroid impacts pit its gold-coated bus while RTG output slowly decays by 4 Watts per year.',
+        legacy: 'Farthest human-made object in history (over 24.4 billion km from Earth). Carries the 12-inch gold-plated copper phonograph record containing sounds, music, and images of Earth.',
+        distanceTotalKm: 24400000000,
+        transitDurationStr: '48 Years, 6 Months (Active Interstellar Mission)',
         maxVelocityKmS: 61.2,
+        scientificPayloads: [
+          {
+            name: 'Plasma Wave Subsystem',
+            acronym: 'PWS',
+            purpose: 'Measures density oscillations in surrounding space; recorded the jump from solar wind (0.002 e-/cm³) to interstellar plasma (0.08 e-/cm³), confirming exit from the heliosphere.'
+          },
+          {
+            name: 'Cosmic Ray Subsystem',
+            acronym: 'CRS',
+            purpose: 'Detects energetic atomic nuclei originating from supernova remnants outside our solar system.'
+          },
+          {
+            name: 'Low-Energy Charged Particle',
+            acronym: 'LECP',
+            purpose: 'Measures differential energy spectra and angular distributions of electrons and ions in the heliosheath.'
+          },
+          {
+            name: 'Triaxial Fluxgate Magnetometer',
+            acronym: 'MAG',
+            purpose: 'Mounted on a 13-meter deployable fiberglass boom to detect changes in interplanetary and interstellar magnetic field strength.'
+          },
+          {
+            name: 'The Golden Record',
+            acronym: 'AUDIO-VISUAL',
+            purpose: '12-inch gold-plated copper disc containing 115 analog images, natural sounds, greetings in 55 languages, and 90 minutes of diverse human musical traditions.'
+          }
+        ],
+        scorecard: {
+          surfaceSols: '48+ Years (Active Mission)',
+          distanceTraversed: '24.4 Billion km (163.1 AU)',
+          massLeftBehind: 'Booster stages in solar orbit',
+          sampleMassReturned: 'In-situ interstellar plasma telemetry'
+        },
         waypoints: [
-          { t: 0.15, label: 'EARTH DEPARTURE' },
-          { t: 0.40, label: 'JUPITER GRAVITY ASSIST (+16 km/s)' },
-          { t: 0.65, label: 'SATURN GRAVITY ASSIST (+35° DEFLECTION)' }
+          { t: 0.08, label: 'EARTH DEPARTURE / HYPERBOLIC ESCAPE' },
+          { t: 0.36, label: 'JUPITER GRAVITY ASSIST (+16 km/s)' },
+          { t: 0.62, label: 'SATURN & TITAN FLYBY (+35° DEFLECTION)' },
+          { t: 0.82, label: 'TERMINATION SHOCK & HELIOSHEATH' },
+          { t: 1.00, label: 'HELIOPAUSE (TRUE INTERSTELLAR SPACE)' }
         ],
         phases: [
           {
-            threshold: 0.15,
+            threshold: 0.12,
             name: 'PHASE 1: TITAN IIIE CENTAUR LAUNCH',
             tag: 'LIFTOFF',
-            hazard: 'Titan IIIE solid rocket motor staging over Cape Canaveral on September 5, 1977.',
-            details: 'Direct interplanetary injection onto a hyperbolic high-energy trajectory aimed at the Jovian gravity well.'
+            hazard: 'High-energy hyperbolic injection at 15.2 km/s (55,000 km/h) escape speed.',
+            details: 'Titan IIIE booster with Centaur D-1T upper stage and TE-M-364-4 solid rocket motor blasts Voyager directly onto an interstellar trajectory.'
           },
           {
-            threshold: 0.35,
-            name: 'PHASE 2: JUPITER GRAVITY ASSIST',
+            threshold: 0.40,
+            name: 'PHASE 2: JUPITER GRAVITY ASSIST & IO VOLCANOES',
             tag: 'SLINGSHOT 1',
-            hazard: 'Extreme Jovian radiation belts capable of destroying unshielded CMOS electronics.',
-            details: 'Closest approach of 349,000 km steals orbital momentum from Jupiter, accelerating Voyager 1 by 16 km/s outward toward Saturn.'
+            hazard: 'Intense Jovian magnetic radiation belts. 349,000 km closest periapsis.',
+            details: 'Voyager skims past Jupiter, stealing orbital angular momentum. Jovian gravity accelerates the spacecraft by +16 km/s, slinging it across interplanetary space towards Saturn.'
           },
           {
-            threshold: 0.65,
-            name: 'PHASE 3: SATURN ENCOUNTER & TITAN DIVE',
+            threshold: 0.68,
+            name: 'PHASE 3: SATURN ENCOUNTER & TITAN FLYBY',
             tag: 'SLINGSHOT 2',
-            hazard: 'Titan close flyby deflects trajectory 35° out of the ecliptic plane into deep space.',
-            details: 'Voyager inspects Saturn\'s F-ring and Titan\'s nitrogen atmosphere before sling-shooting northward at hyperbolic escape velocity.'
+            hazard: 'Titan close atmospheric encounter (6,490 km) and ring plane crossing.',
+            details: 'Titan\'s gravitational pull bends Voyager 1\'s trajectory 35° North out of the ecliptic plane into deep space, while Voyager 2 continues along the Grand Tour to Uranus and Neptune.'
           },
           {
-            threshold: 0.85,
-            name: 'PHASE 4: TERMINATION SHOCK & HELIOSHEATH',
-            tag: 'HELIOPAUSE',
-            hazard: 'Solar wind drops abruptly from supersonic (400 km/s) to subsonic speeds in the turbulent heliosheath.',
-            details: 'Plasma wave detectors record high-frequency vibrations confirming transition beyond the Sun\'s magnetic bubble.'
+            threshold: 0.86,
+            name: 'PHASE 4: TERMINATION SHOCK & THE PALE BLUE DOT',
+            tag: 'HELIOSHEATH',
+            hazard: 'Solar wind abruptly decelerates from supersonic (400 km/s) to subsonic in the turbulent heliosheath.',
+            details: 'At 6 billion km, Carl Sagan directs Voyager to take the historic "Pale Blue Dot" family portrait. Cosmic ray sensors record the boundaries of the Sun\'s magnetic bubble.'
           },
           {
             threshold: 1.0,
-            name: 'PHASE 5: THE INTERSTELLAR VOYAGER',
+            name: 'PHASE 5: THE INTERSTELLAR MONUMENT',
             tag: 'INTERSTELLAR',
-            hazard: 'Nuclear decay of plutonium RTG fuel. Power decreases ~4 Watts per year.',
-            details: 'Voyager 1 will drift silently among the Milky Way stars for millions of years, outliving humanity and planet Earth itself.'
+            hazard: 'Galactic cosmic rays, cold interstellar plasma at 3 Kelvin (-270°C). RTG electrical output decays ~4W/year.',
+            details: 'On August 25, 2012, Voyager 1 became the first human-made craft to cross the heliopause into true interstellar space. Drifting silently at 17 km/s with the Golden Record, it will wander the Milky Way for eternity.'
           }
         ]
       },
+      'voyager-1': null, // initialized below
       'curiosity': {
         id: 'curiosity',
         name: 'Curiosity (MSL)',
@@ -299,8 +364,8 @@ class TrajectorySimulator {
           }
         ]
       },
-      'cassini': {
-        id: 'cassini',
+      'cassini-huygens': {
+        id: 'cassini-huygens',
         name: 'Cassini-Huygens',
         callsign: 'Cassini Orbiter',
         targetBody: 'Saturn',
@@ -322,7 +387,8 @@ class TrajectorySimulator {
         waypoints: [
           { t: 0.15, label: 'EARTH DEPARTURE' },
           { t: 0.50, label: 'VVEJGA GRAVITY ASSISTS' },
-          { t: 0.85, label: 'SATURN RING PLANE INSERTION' }
+          { t: 0.85, label: 'SATURN RING PLANE INSERTION' },
+          { t: 1.00, label: 'SATURN GRAND FINALE PLUNGE' }
         ],
         phases: [
           {
@@ -354,8 +420,172 @@ class TrajectorySimulator {
             details: 'Until the final millisecond, Cassini beamed direct samples of Saturn\'s atmosphere back to Earth before melting into the planet.'
           }
         ]
+      },
+      'cassini': null, // initialized below
+      'perseverance-ingenuity': null, // alias for perseverance
+      'apollo-15': {
+        id: 'apollo-15',
+        name: 'Apollo 15',
+        callsign: 'Endeavour & Falcon',
+        targetBody: 'Moon',
+        targetPlanet: 'Earth',
+        craftType: 'lunar-module',
+        color: 0x60a5fa,
+        colorHex: '#60A5FA',
+        accentColor: '#60A5FA',
+        landingSite: 'Hadley-Apennine (Hadley Rille)',
+        landingCoords: '26.132° N, 3.633° E',
+        landingDate: 'July 30, 1971',
+        solsActive: '12 days (66.9 hours on lunar surface)',
+        discardReason: 'Lunar Roving Vehicle (LRV-001) parked on lunar regolith at VIP site alongside descent stage.',
+        weatheringInfo: 'Extreme lunar thermal cycling, cosmic ray bombardment, and solar UV bleaching.',
+        legacy: 'First mission to deploy the Lunar Roving Vehicle, driving 27.9 km across Hadley Rille.',
+        distanceTotalKm: 384400,
+        transitDurationStr: '3 Days, 1 Hour',
+        maxVelocityKmS: 11.2,
+        waypoints: [
+          { t: 0.15, label: 'EARTH DEPARTURE / TLI' },
+          { t: 0.50, label: 'TRANSLUNAR COAST' },
+          { t: 0.90, label: 'HADLEY RILLE DESCENT' }
+        ],
+        phases: [
+          { threshold: 0.2, name: 'PHASE 1: SATURN V LAUNCH', tag: 'LIFTOFF', hazard: 'High payload mass with Lunar Rover.', details: 'Heaviest Apollo payload launched into translunar injection.' },
+          { threshold: 0.7, name: 'PHASE 2: TRANSLUNAR CRUISE', tag: 'COAST', hazard: 'High-latitude orbital insertion.', details: 'Translunar injection into inclined orbit around the lunar poles.' },
+          { threshold: 1.0, name: 'PHASE 3: HADLEY RILLE LANDING', tag: 'SURFACE', hazard: 'Landing between 4,500m peaks of the Apennine Mountains.', details: 'Falcon touches down near Hadley Rille canyon.' }
+        ]
+      },
+      'viking-1-2': {
+        id: 'viking-1-2',
+        name: 'Viking 1 & 2',
+        callsign: 'Viking 1 (VL-1) & Viking 2 (VL-2)',
+        targetBody: 'Mars',
+        targetPlanet: 'Mars',
+        craftType: 'lander',
+        color: 0xf97316,
+        colorHex: '#F97316',
+        accentColor: '#F97316',
+        landingSite: 'Chryse Planitia & Utopia Planitia',
+        landingCoords: '22.48° N, 312.05° E (VL-1)',
+        landingDate: 'July 20, 1976',
+        solsActive: 'VL-1: 2,307 Sols / VL-2: 1,316 Sols',
+        discardReason: 'Both stationary landers completed primary biology life-detection experiments and remain silent monuments.',
+        weatheringInfo: 'Severe global dust storms and iron oxide regolith abrasion.',
+        legacy: 'First successful long-duration American landings on Mars.',
+        distanceTotalKm: 700000000,
+        transitDurationStr: '10 Months, 11 Days',
+        maxVelocityKmS: 24.0,
+        waypoints: [
+          { t: 0.15, label: 'EARTH ESCAPE' },
+          { t: 0.50, label: 'INTERPLANETARY TRANSIT' },
+          { t: 0.90, label: 'MARS ATMOSPHERIC ENTRY' }
+        ],
+        phases: [
+          { threshold: 0.2, name: 'PHASE 1: TITAN IIIE LAUNCH', tag: 'LIFTOFF', hazard: 'Titan Centaur escape.', details: 'Dual spacecraft launched in 1975.' },
+          { threshold: 0.7, name: 'PHASE 2: HELIOCENTRIC CRUISE', tag: 'CRUISE', hazard: 'Solar cosmic radiation.', details: '10-month transit to Mars.' },
+          { threshold: 1.0, name: 'PHASE 3: CHRYSE PLANITIA LANDING', tag: 'LANDED', hazard: 'Parachute and terminal descent engines.', details: 'Historic touchdown on the golden Martian plain.' }
+        ]
+      },
+      'viking-1': null, // alias
+      'pathfinder-sojourner': {
+        id: 'pathfinder-sojourner',
+        name: 'Mars Pathfinder & Sojourner',
+        callsign: 'Carl Sagan Memorial Station & Sojourner',
+        targetBody: 'Mars',
+        targetPlanet: 'Mars',
+        craftType: 'mars-rover',
+        color: 0xfb923c,
+        colorHex: '#FB923C',
+        accentColor: '#FB923C',
+        landingSite: 'Ares Vallis (Flood Plain)',
+        landingCoords: '19.33° N, 326.45° E',
+        landingDate: 'July 4, 1997',
+        solsActive: '83 Sols (3x design life)',
+        discardReason: 'Airbag tetrahedron lander base and 10.6 kg microrover remain at Ares Vallis.',
+        weatheringInfo: 'Martian dust fallout coats solar cells and cold thermal cycling (-85°C nights).',
+        legacy: 'First mobile robotic wheeled rover on Mars, revolutionizing low-cost exploration.',
+        distanceTotalKm: 497000000,
+        transitDurationStr: '6 Months, 28 Days',
+        maxVelocityKmS: 24.1,
+        waypoints: [
+          { t: 0.15, label: 'EARTH DEPARTURE' },
+          { t: 0.50, label: 'INTERPLANETARY CRUISE' },
+          { t: 0.90, label: 'AIRBAG BOUNCE LANDING' }
+        ],
+        phases: [
+          { threshold: 0.2, name: 'PHASE 1: DELTA II LAUNCH', tag: 'LIFTOFF', hazard: 'Direct injection.', details: 'Delta II launch from Cape Canaveral.' },
+          { threshold: 0.7, name: 'PHASE 2: INTERPLANETARY TRANSIT', tag: 'CRUISE', hazard: 'Autonomous cruise maneuvers.', details: 'Fast transit directly onto Mars atmospheric entry.' },
+          { threshold: 1.0, name: 'PHASE 3: AIRBAG BOUNCE & ROLLOUT', tag: 'LANDED', hazard: '24-airbag cluster bounce at 50 km/h.', details: 'Pathfinder bounces 15 times before resting at Ares Vallis.' }
+        ]
+      },
+      'spirit-opportunity': {
+        id: 'spirit-opportunity',
+        name: 'Spirit & Opportunity',
+        callsign: 'MER-A (Spirit) & MER-B (Opportunity)',
+        targetBody: 'Mars',
+        targetPlanet: 'Mars',
+        craftType: 'mars-rover',
+        color: 0xef4444,
+        colorHex: '#EF4444',
+        accentColor: '#EF4444',
+        landingSite: 'Gusev Crater & Meridiani Planum',
+        landingCoords: '14.57° S, 175.47° E (Spirit) / 1.95° S, 354.47° E (Oppy)',
+        landingDate: 'January 4 & January 25, 2004',
+        solsActive: 'Spirit: 2,210 Sols / Opportunity: 5,111 Sols',
+        discardReason: 'Solar panels covered by dust storms; rovers remain preserved on Mars.',
+        weatheringInfo: 'Martian dust devils, global dust storms, wheel seizure, cold thermal cycling.',
+        legacy: 'Opportunity drove a marathon 45.16 km, confirming ancient liquid water on Mars.',
+        distanceTotalKm: 487000000,
+        transitDurationStr: '6 Months, 24 Days',
+        maxVelocityKmS: 24.2,
+        waypoints: [
+          { t: 0.15, label: 'EARTH ESCAPE' },
+          { t: 0.50, label: 'HOHMANN CRUISE' },
+          { t: 0.90, label: 'AIRBAG IMPACT & INFLATION' }
+        ],
+        phases: [
+          { threshold: 0.2, name: 'PHASE 1: DELTA II HEAVY LAUNCH', tag: 'LIFTOFF', hazard: 'Twin launches June/July 2003.', details: 'MER twin rovers launched on Delta II Heavy.' },
+          { threshold: 0.7, name: 'PHASE 2: HOHMANN TRANSIT', tag: 'CRUISE', hazard: 'Solar radiation.', details: 'Cruise stage attitude control.' },
+          { threshold: 1.0, name: 'PHASE 3: AIRBAG TOUCHDOWN', tag: 'LANDED', hazard: 'High-speed airbag bounce.', details: 'Bounced into Gusev Crater and Meridiani Planum.' }
+        ]
+      },
+      'hubble-jwst': {
+        id: 'hubble-jwst',
+        name: 'Hubble & James Webb (JWST)',
+        callsign: 'HST & JWST Cosmic Sentinels',
+        targetBody: 'Lagrange L2',
+        targetPlanet: 'Earth',
+        craftType: 'space-telescope',
+        color: 0x06b6d4,
+        colorHex: '#06B6D4',
+        accentColor: '#06B6D4',
+        landingSite: 'Sun-Earth L2 Halo Orbit (1.5 Million km from Earth)',
+        landingCoords: 'Lagrangian Point L2 Halo Orbit',
+        landingDate: 'Arrived at L2 January 24, 2022',
+        solsActive: 'Active Telescopes (HST: 34+ yrs, JWST: 2+ yrs)',
+        discardReason: 'HST jettisoned early servicing components; JWST operates in ultra-cold deep halo orbit.',
+        weatheringInfo: 'Micrometeoroid impacts on golden beryllium mirrors; deep space cold at 40 Kelvin (-233°C).',
+        legacy: 'Revolutionized human cosmology, revealing the first galaxies formed after the Big Bang.',
+        distanceTotalKm: 1500000,
+        transitDurationStr: '29 Days to L2 Halo Orbit',
+        maxVelocityKmS: 10.5,
+        waypoints: [
+          { t: 0.15, label: 'EARTH DEPARTURE / ARIANE 5' },
+          { t: 0.50, label: 'SUNSHIELD TENSIONING CRUISE' },
+          { t: 1.00, label: 'L2 LAGRANGE HALO INSERTION' }
+        ],
+        phases: [
+          { threshold: 0.2, name: 'PHASE 1: ARIANE 5 LAUNCH', tag: 'LIFTOFF', hazard: 'Flawless precision injection by Ariane 5 from Kourou.', details: 'Saved propellant to extend mission lifetime to 20+ years.' },
+          { threshold: 0.6, name: 'PHASE 2: SUNSHIELD & MIRROR UNFOLDING', tag: 'DEPLOYMENT', hazard: '344 single-point failures resolved autonomously in deep space.', details: 'Tennis-court-sized Kapton sunshield deployed successfully.' },
+          { threshold: 1.0, name: 'PHASE 3: L2 HALO ORBIT INSERTION', tag: 'ORBITAL', hazard: 'Station-keeping around gravitational equilibrium.', details: 'JWST enters halo orbit 1.5M km from Earth.' }
+        ]
       }
     };
+
+    // Aliases
+    this.missions['voyager-1'] = this.missions['voyager-1-2'];
+    this.missions['cassini'] = this.missions['cassini-huygens'];
+    this.missions['perseverance-ingenuity'] = this.missions['perseverance'];
+    this.missions['viking-1'] = this.missions['viking-1-2'];
 
     this.init();
   }
@@ -475,33 +705,36 @@ class TrajectorySimulator {
 
     this.rocketGroup.add(bodyGroup);
 
-    // --- B. Conical Chubby Nosecone with Cartoon Bobble Antenna ---
+    // --- B. Conical Chubby Nosecone with Cartoon Bobble Antenna (Grouped for Probe Toggling) ---
+    this.rocketNoseGroup = new THREE.Group();
     const noseGeo = new THREE.ConeGeometry(0.38, 0.62, 24);
     const nose = new THREE.Mesh(noseGeo, chalkCrimsonMat);
     nose.position.y = 0.95;
-    this.rocketGroup.add(nose);
+    this.rocketNoseGroup.add(nose);
 
     const noseOutGeo = new THREE.ConeGeometry(0.38 * 1.16, 0.62 * 1.10, 24);
     const noseOut = new THREE.Mesh(noseOutGeo, inkOutlineMat);
     noseOut.position.y = 0.95;
-    this.rocketGroup.add(noseOut);
+    this.rocketNoseGroup.add(noseOut);
 
     // Cute retro bobble antenna on top
     const stemGeo = new THREE.CylinderGeometry(0.025, 0.035, 0.28, 10);
     const stem = new THREE.Mesh(stemGeo, charcoalMat);
     stem.position.y = 1.34;
-    this.rocketGroup.add(stem);
+    this.rocketNoseGroup.add(stem);
 
     // Bright lemon bobble sphere with ink outline
     const bobbleGeo = new THREE.SphereGeometry(0.095, 16, 16);
     const bobble = new THREE.Mesh(bobbleGeo, lemonMat);
     bobble.position.y = 1.50;
-    this.rocketGroup.add(bobble);
+    this.rocketNoseGroup.add(bobble);
 
     const bobbleOutGeo = new THREE.SphereGeometry(0.095 * 1.25, 16, 16);
     const bobbleOut = new THREE.Mesh(bobbleOutGeo, inkOutlineMat);
     bobbleOut.position.y = 1.50;
-    this.rocketGroup.add(bobbleOut);
+    this.rocketNoseGroup.add(bobbleOut);
+
+    this.rocketGroup.add(this.rocketNoseGroup);
 
     // --- C. Big Chubby Bubble Porthole with Cartoon Glass Glints ---
     const windowGroup = new THREE.Group();
@@ -537,7 +770,8 @@ class TrajectorySimulator {
 
     this.rocketGroup.add(windowGroup);
 
-    // --- D. 3 Chunky Swept Cartoon Fins with Thick Ink Outlines ---
+    // --- D. 3 Chunky Swept Cartoon Fins (Grouped for Probe Toggling) ---
+    this.rocketFinGroup = new THREE.Group();
     const finShape = new THREE.Shape();
     finShape.moveTo(0, 0.08);
     finShape.quadraticCurveTo(0.48, 0.05, 0.58, -0.18);
@@ -561,15 +795,97 @@ class TrajectorySimulator {
       const fin = new THREE.Mesh(finGeo, chalkCrimsonMat);
       fin.rotation.y = angle;
       fin.position.y = -0.35;
-      this.rocketGroup.add(fin);
+      this.rocketFinGroup.add(fin);
 
       // Thick black ink outline for fin
       const finOut = new THREE.Mesh(finGeo, inkOutlineMat);
       finOut.rotation.y = angle;
       finOut.position.y = -0.35;
       finOut.scale.set(1.16, 1.16, 1.16);
-      this.rocketGroup.add(finOut);
+      this.rocketFinGroup.add(finOut);
     }
+    this.rocketGroup.add(this.rocketFinGroup);
+
+    // --- D.2. Interstellar Probe Accessories (Voyager HGA Dish, Golden Record, RTG & Mag Booms) ---
+    this.probeAddonGroup = new THREE.Group();
+    this.probeAddonGroup.name = 'ProbeAddonGroup';
+
+    // 1. High-Gain Antenna (HGA) Parabolic Dish (White with ink outline)
+    const dishGeo = new THREE.SphereGeometry(0.54, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2.7);
+    const dishMesh = new THREE.Mesh(dishGeo, chalkWhiteMat);
+    dishMesh.rotation.x = -Math.PI / 2;
+    dishMesh.position.set(0, 0.72, 0);
+    this.probeAddonGroup.add(dishMesh);
+
+    const dishOutGeo = new THREE.SphereGeometry(0.54 * 1.14, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2.7);
+    const dishOut = new THREE.Mesh(dishOutGeo, inkOutlineMat);
+    dishOut.rotation.x = -Math.PI / 2;
+    dishOut.position.set(0, 0.72, 0);
+    this.probeAddonGroup.add(dishOut);
+
+    // Sub-reflector feed horn
+    const hornGeo = new THREE.CylinderGeometry(0.022, 0.035, 0.28, 12);
+    const hornMesh = new THREE.Mesh(hornGeo, charcoalMat);
+    hornMesh.position.set(0, 1.05, 0);
+    this.probeAddonGroup.add(hornMesh);
+
+    const hornTipGeo = new THREE.SphereGeometry(0.045, 12, 12);
+    const hornTip = new THREE.Mesh(hornTipGeo, lemonMat);
+    hornTip.position.set(0, 1.20, 0);
+    this.probeAddonGroup.add(hornTip);
+
+    // 2. The Golden Record (Mounted on the right side)
+    const recordGeo = new THREE.CylinderGeometry(0.20, 0.20, 0.025, 28);
+    const recordMat = new THREE.MeshToonMaterial({
+      color: 0xfacc15,
+      emissive: 0xca8a04,
+      emissiveIntensity: 0.6,
+      roughness: 0.3
+    });
+    const recordMesh = new THREE.Mesh(recordGeo, recordMat);
+    recordMesh.rotation.z = Math.PI / 2;
+    recordMesh.position.set(0.44, 0.05, 0.0);
+    this.probeAddonGroup.add(recordMesh);
+
+    const recordOut = new THREE.Mesh(new THREE.CylinderGeometry(0.20 * 1.15, 0.20 * 1.15, 0.025 * 1.05, 28), inkOutlineMat);
+    recordOut.rotation.z = Math.PI / 2;
+    recordOut.position.set(0.44, 0.05, 0.0);
+    this.probeAddonGroup.add(recordOut);
+
+    const recordRingGeo = new THREE.RingGeometry(0.08, 0.12, 24);
+    const recordRingMat = new THREE.MeshBasicMaterial({ color: 0x78350f, side: THREE.DoubleSide });
+    const recordRing = new THREE.Mesh(recordRingGeo, recordRingMat);
+    recordRing.rotation.y = Math.PI / 2;
+    recordRing.position.set(0.455, 0.05, 0.0);
+    this.probeAddonGroup.add(recordRing);
+
+    // 3. Magnetometer Boom (Deployable fiberglass lattice extending left)
+    const magBoomGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.95, 8);
+    const magBoom = new THREE.Mesh(magBoomGeo, charcoalMat);
+    magBoom.rotation.z = Math.PI / 2.3;
+    magBoom.position.set(-0.85, 0.22, 0.0);
+    this.probeAddonGroup.add(magBoom);
+
+    const magSensor = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), chalkCyanMat);
+    magSensor.position.set(-1.25, 0.38, 0.0);
+    this.probeAddonGroup.add(magSensor);
+
+    // 4. RTG Power Canister Cluster (Extending rear-left)
+    const rtgBoomGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.65, 8);
+    const rtgBoom = new THREE.Mesh(rtgBoomGeo, charcoalMat);
+    rtgBoom.rotation.x = Math.PI / 3;
+    rtgBoom.position.set(0.0, -0.25, -0.65);
+    this.probeAddonGroup.add(rtgBoom);
+
+    const rtgCanisterGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.24, 12);
+    const rtgCanisterMat = new THREE.MeshToonMaterial({ color: 0x475569, roughness: 0.6 });
+    const rtgMesh = new THREE.Mesh(rtgCanisterGeo, rtgCanisterMat);
+    rtgMesh.rotation.x = Math.PI / 3;
+    rtgMesh.position.set(0.0, -0.42, -0.92);
+    this.probeAddonGroup.add(rtgMesh);
+
+    this.probeAddonGroup.visible = false;
+    this.rocketGroup.add(this.probeAddonGroup);
 
     // --- E. Retro Flared Bell Engine Nozzle ---
     const nozzleGeo = new THREE.CylinderGeometry(0.16, 0.36, 0.35, 20, 1, true);
@@ -628,8 +944,8 @@ class TrajectorySimulator {
     this.flamePuff4.position.y = -1.45;
     this.rocketGroup.add(this.flamePuff4);
 
-    // MINIATURE PROPORTIONS: scale = 0.55 (Total height ~ 1.2 units, width ~ 0.5 units)
-    this.rocketGroup.scale.setScalar(0.55);
+    // MINIATURE PROPORTIONS: scale = 0.16 (Total height ~ 0.35 units, width ~ 0.14 units)
+    this.rocketGroup.scale.setScalar(0.16);
     this.rocketGroup.visible = false;
     this.scene.add(this.rocketGroup);
 
@@ -673,16 +989,29 @@ class TrajectorySimulator {
     this.landingBeacon = new THREE.Group();
     this.landingBeacon.name = 'TrajectoryLandingBeacon';
 
-    // 1. Concentric Chalk Target Rings on Surface (Compact Proportions)
+    // 1. Concentric Chalk Target Rings on Surface with crisp contrast pad base
+    const padBaseGeo = new THREE.CircleGeometry(0.95, 32);
+    const padBaseMat = new THREE.MeshBasicMaterial({
+      color: 0x070e1e,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.75
+    });
+    const padBase = new THREE.Mesh(padBaseGeo, padBaseMat);
+    padBase.rotation.x = Math.PI / 2;
+    padBase.position.y = 0.002;
+    this.landingBeacon.add(padBase);
+
     const ringGeo1 = new THREE.RingGeometry(0.50, 0.62, 32);
     const ringMat1 = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.9
+      opacity: 0.95
     });
     const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
     ring1.rotation.x = Math.PI / 2;
+    ring1.position.y = 0.006;
     this.landingBeacon.add(ring1);
 
     const ringGeo2 = new THREE.RingGeometry(0.80, 0.90, 32);
@@ -690,14 +1019,16 @@ class TrajectorySimulator {
       color: 0xffffff,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.85
     });
     const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
     ring2.rotation.x = Math.PI / 2;
+    ring2.position.y = 0.004;
     this.landingBeacon.add(ring2);
 
-    // 2. Miniature Cel-shaded Lander & Memorial Flag
+    // 2. Miniature Cel-shaded Lander & Memorial Flag (positioned beside pad to avoid rocket clipping)
     this.chalkLander = new THREE.Group();
+    this.chalkLander.position.set(1.25, 0, 0.35);
 
     // Golden foil octagonal descent stage
     const baseGeo = new THREE.CylinderGeometry(0.22, 0.30, 0.16, 8);
@@ -756,8 +1087,121 @@ class TrajectorySimulator {
     this.chalkLander.scale.set(0.001, 0.001, 0.001);
     this.landingBeacon.add(this.chalkLander);
 
+    // 3. Regolith Chalk Dust Ring (one-time expanding landing shockwave)
+    const dustGeo = new THREE.RingGeometry(0.12, 0.28, 32);
+    const dustMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.0
+    });
+    this.dustRing = new THREE.Mesh(dustGeo, dustMat);
+    this.dustRing.rotation.x = Math.PI / 2;
+    this.dustRing.position.y = 0.01;
+    this.landingBeacon.add(this.dustRing);
+
+    // Pad scale proportioned for miniature rocket (scale = 0.16)
+    this.landingBeacon.scale.setScalar(0.35);
+
     this.landingBeacon.visible = false;
     this.scene.add(this.landingBeacon);
+  }
+
+  triggerDustRing() {
+    if (this.hasDustRingTriggered || !this.dustRing) return;
+    this.hasDustRingTriggered = true;
+    this.dustRing.scale.set(1.0, 1.0, 1.0);
+    this.dustRing.material.opacity = 0.85;
+
+    if (window.TWEEN) {
+      new TWEEN.Tween(this.dustRing.scale)
+        .to({ x: 5.5, y: 5.5, z: 5.5 }, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+      new TWEEN.Tween(this.dustRing.material)
+        .to({ opacity: 0.0 }, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+  }
+
+  // --- 2.5 AUTHENTIC MISSION PLANETARY ALIGNMENT HELPERS ---
+  alignPlanetsForMission(missionId) {
+    if (!this.app || !this.app.planets) return;
+
+    // Backup current orbital angles
+    ['Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Mars'].forEach(k => {
+      const pl = this.app.planets[k];
+      if (pl && pl.angleBackup === undefined) {
+        pl.angleBackup = pl.angle;
+      }
+    });
+
+    const earthObj = this.app.planets['Earth'];
+    const earthAngle = earthObj ? earthObj.angle : 0;
+
+    if (missionId.includes('voyager')) {
+      // Authentic 1977 Grand Tour planetary alignment geometry:
+      // Earth at departure, Jupiter ~49° ahead (0.85 rad), Saturn ~89° ahead (1.55 rad),
+      // Uranus ~123° ahead (2.15 rad), Neptune ~152° ahead (2.65 rad)
+      if (this.app.planets['Jupiter']) {
+        this.app.planets['Jupiter'].angle = earthAngle + 0.85;
+        this.syncPlanetPosition('Jupiter');
+      }
+      if (this.app.planets['Saturn']) {
+        this.app.planets['Saturn'].angle = earthAngle + 1.55;
+        this.syncPlanetPosition('Saturn');
+      }
+      if (this.app.planets['Uranus']) {
+        this.app.planets['Uranus'].angle = earthAngle + 2.15;
+        this.syncPlanetPosition('Uranus');
+      }
+      if (this.app.planets['Neptune']) {
+        this.app.planets['Neptune'].angle = earthAngle + 2.65;
+        this.syncPlanetPosition('Neptune');
+      }
+    } else if (
+      missionId.includes('perseverance') || missionId.includes('curiosity') ||
+      missionId.includes('viking') || missionId.includes('pathfinder') || missionId.includes('spirit')
+    ) {
+      // Hohmann transfer geometry: Mars is positioned at orbital rendezvous angle (~140° ahead)
+      if (this.app.planets['Mars']) {
+        this.app.planets['Mars'].angle = earthAngle + 2.45;
+        this.syncPlanetPosition('Mars');
+      }
+    } else if (missionId.includes('cassini')) {
+      if (this.app.planets['Jupiter']) {
+        this.app.planets['Jupiter'].angle = earthAngle + 1.05;
+        this.syncPlanetPosition('Jupiter');
+      }
+      if (this.app.planets['Saturn']) {
+        this.app.planets['Saturn'].angle = earthAngle + 2.25;
+        this.syncPlanetPosition('Saturn');
+      }
+    }
+  }
+
+  syncPlanetPosition(name) {
+    const pl = this.app.planets[name];
+    if (pl && pl.mesh && pl.mesh.position && pl.data) {
+      pl.mesh.position.x = Math.cos(pl.angle) * pl.data.distance;
+      pl.mesh.position.z = Math.sin(pl.angle) * pl.data.distance;
+    }
+  }
+
+  restorePlanetPositions() {
+    if (!this.app || !this.app.planets) return;
+    ['Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Mars'].forEach(k => {
+      const pl = this.app.planets[k];
+      if (pl && pl.angleBackup !== undefined) {
+        pl.angle = pl.angleBackup;
+        delete pl.angleBackup;
+        if (pl.mesh && pl.mesh.position && pl.data) {
+          pl.mesh.position.x = Math.cos(pl.angle) * pl.data.distance;
+          pl.mesh.position.z = Math.sin(pl.angle) * pl.data.distance;
+        }
+      }
+    });
   }
 
   // --- 3. HIGH-CONTRAST CHALK-SKETCH TRAJECTORY DESIGN ---
@@ -774,6 +1218,12 @@ class TrajectorySimulator {
       this.trajectoryTube.geometry.dispose();
       this.trajectoryTube.material.dispose();
       this.trajectoryTube = null;
+    }
+    if (this.secondaryChalkLine) {
+      this.scene.remove(this.secondaryChalkLine);
+      if (this.secondaryChalkLine.geometry) this.secondaryChalkLine.geometry.dispose();
+      if (this.secondaryChalkLine.material) this.secondaryChalkLine.material.dispose();
+      this.secondaryChalkLine = null;
     }
     if (this.activeTrailMesh) {
       this.scene.remove(this.activeTrailMesh);
@@ -795,7 +1245,7 @@ class TrajectorySimulator {
 
     const points = [];
 
-    if (mission.id === 'apollo-11') {
+    if (mission.id === 'apollo-11' || mission.id.includes('apollo') || mission.targetBody === 'Moon' || mission.targetPlanet === 'Moon') {
       // Earth to Moon Translunar Free-Return Loop
       const moonObj = earthObj && earthObj.moons && earthObj.moons[0];
       const moonPos = new THREE.Vector3();
@@ -817,10 +1267,154 @@ class TrajectorySimulator {
       points.push(mid2);
       // Point 5: Lunar Orbit insertion
       points.push(moonPos.clone().add(new THREE.Vector3(-1.2, 1.8, 0.9)));
-      // Point 6: Touchdown at Tranquility Base
+      // Point 5.5: Vertical terminal descent corridor directly above pad
+      points.push(moonPos.clone().add(new THREE.Vector3(-0.12, 1.50, 0.08)));
+      // Point 6: Touchdown at Tranquility Base / Hadley Rille
       points.push(moonPos.clone().add(new THREE.Vector3(0, 1.15, 0)));
 
-    } else if (mission.id === 'perseverance' || mission.id === 'curiosity' || mission.id === 'viking-1') {
+    } else if (
+      mission.id === 'voyager-1' || mission.id === 'voyager-1-2' || mission.id.includes('voyager') ||
+      mission.targetBody === 'Deep Space' || mission.targetPlanet === 'Interstellar'
+    ) {
+      // Authentic Voyager 1 & 2 Interstellar Flight Dynamics
+      // Earth -> Jupiter Gravity Assist (+16 km/s) -> Saturn & Titan Gravity Assist (+35° North deflection) -> Interstellar Space
+      const jupObj = this.app.planets['Jupiter'];
+      const satObj = this.app.planets['Saturn'];
+
+      const jupPos = new THREE.Vector3();
+      if (jupObj && jupObj.mesh) jupObj.mesh.getWorldPosition(jupPos);
+      else jupPos.set(195, 0, 0);
+
+      const satPos = new THREE.Vector3();
+      if (satObj && satObj.mesh) satObj.mesh.getWorldPosition(satPos);
+      else satPos.set(255, 0, 0);
+
+      // Local tangents and radial directions
+      const tEarth = new THREE.Vector3(-earthPos.z, 0, earthPos.x).normalize();
+      const rEarth = new THREE.Vector3(earthPos.x, 0, earthPos.z).normalize();
+
+      const tJup = new THREE.Vector3(-jupPos.z, 0, jupPos.x).normalize();
+      const rJup = new THREE.Vector3(jupPos.x, 0, jupPos.z).normalize();
+
+      const tSat = new THREE.Vector3(-satPos.z, 0, satPos.x).normalize();
+      const rSat = new THREE.Vector3(satPos.x, 0, satPos.z).normalize();
+
+      // Point 0: Launch Pad on Earth's surface
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
+
+      // Point 1: Direct heliocentric injection burn (15.2 km/s escape speed)
+      points.push(earthPos.clone().add(tEarth.clone().multiplyScalar(10)).add(rEarth.clone().multiplyScalar(4)).add(new THREE.Vector3(0, 2.5, 0)));
+
+      // Point 2: Interplanetary transit through Asteroid Belt past Mars orbit
+      const midEJ = new THREE.Vector3().lerpVectors(earthPos, jupPos, 0.48);
+      midEJ.y = 2.0;
+      midEJ.add(tEarth.clone().multiplyScalar(8));
+      points.push(midEJ);
+
+      // Point 3: Jupiter inbound corridor (approaching trailing flank of giant planet)
+      points.push(jupPos.clone().sub(tJup.clone().multiplyScalar(22)).sub(rJup.clone().multiplyScalar(8)).add(new THREE.Vector3(0, 1.5, 0)));
+
+      // Point 4: Jovian Periapsis - close gravitational slingshot (+16 km/s boost)
+      points.push(jupPos.clone().sub(tJup.clone().multiplyScalar(2)).add(rJup.clone().multiplyScalar(13)).add(new THREE.Vector3(0, 3.8, 0)));
+
+      // Point 5: Post-Jupiter outbound trajectory accelerated towards Saturn
+      const jupExit = jupPos.clone().add(tJup.clone().multiplyScalar(20)).add(rJup.clone().multiplyScalar(18)).add(new THREE.Vector3(0, 6.0, 0));
+      points.push(jupExit);
+
+      // Point 6: Interplanetary void between Jupiter and Saturn orbits
+      points.push(new THREE.Vector3().lerpVectors(jupExit, satPos, 0.50).add(new THREE.Vector3(0, 8.5, 0)));
+
+      // Point 7: Saturn & Titan inbound approach corridor
+      points.push(satPos.clone().sub(tSat.clone().multiplyScalar(18)).sub(rSat.clone().multiplyScalar(6)).add(new THREE.Vector3(0, 9.0, 0)));
+
+      // Point 8: Saturn periapsis & Titan flyby - close gravitational slingshot
+      points.push(satPos.clone().sub(tSat.clone().multiplyScalar(2)).add(rSat.clone().multiplyScalar(12)).add(new THREE.Vector3(0, 14.0, 0)));
+
+      // Point 9: Historic Northward Deflection (+35° Ecliptic Inclination into deep space)
+      const escapeDir = new THREE.Vector3().addScaledVector(rSat, 0.72).addScaledVector(tSat, 0.40).add(new THREE.Vector3(0, 0.85, 0)).normalize();
+      points.push(satPos.clone().add(escapeDir.clone().multiplyScalar(85)));
+
+      // Point 10: Heliosheath & Termination Shock crossing
+      points.push(satPos.clone().add(escapeDir.clone().multiplyScalar(200)));
+
+      // Point 11: Heliopause (121.6 AU) - True Interstellar Space (Constellation Ophiuchus)
+      points.push(satPos.clone().add(escapeDir.clone().multiplyScalar(380)));
+
+      // Hide planetary landing beacon for deep space missions
+      if (this.landingBeacon) {
+        this.landingBeacon.visible = false;
+      }
+
+      // Draw secondary Grand Tour trajectory for Voyager 2 (branching to Uranus and Neptune)
+      const uranObj = this.app.planets['Uranus'];
+      const neptObj = this.app.planets['Neptune'];
+      if (uranObj && neptObj && uranObj.mesh && neptObj.mesh) {
+        const uranPos = new THREE.Vector3();
+        uranObj.mesh.getWorldPosition(uranPos);
+        const neptPos = new THREE.Vector3();
+        neptObj.mesh.getWorldPosition(neptPos);
+
+        const v2Points = [
+          points[4].clone(), // Jupiter exit
+          points[6].clone(), // Mid JS
+          satPos.clone().add(new THREE.Vector3(-6, 2, 10)), // Saturn flyby (staying in ecliptic)
+          new THREE.Vector3().lerpVectors(satPos, uranPos, 0.5).add(new THREE.Vector3(0, -2, 0)),
+          uranPos.clone().add(new THREE.Vector3(-4, -2, 6)), // Uranus flyby (Jan 1986)
+          new THREE.Vector3().lerpVectors(uranPos, neptPos, 0.5).add(new THREE.Vector3(0, -6, 0)),
+          neptPos.clone().add(new THREE.Vector3(-4, -5, 5)), // Neptune flyby (Aug 1989)
+          neptPos.clone().add(new THREE.Vector3(60, -85, 120)) // Southward interstellar ejection (-32°)
+        ];
+        const v2Curve = new THREE.CatmullRomCurve3(v2Points, false, 'centripetal', 0.5);
+        const v2Geo = new THREE.BufferGeometry().setFromPoints(v2Curve.getPoints(90));
+        const v2Mat = new THREE.LineDashedMaterial({
+          color: 0x38bdf8,
+          dashSize: 1.2,
+          gapSize: 0.8,
+          scale: 1,
+          transparent: true,
+          opacity: 0.70
+        });
+        this.secondaryChalkLine = new THREE.Line(v2Geo, v2Mat);
+        this.secondaryChalkLine.computeLineDistances();
+        this.secondaryChalkLine.name = 'SecondaryChalkLine';
+        this.scene.add(this.secondaryChalkLine);
+      }
+
+    } else if (
+      mission.id === 'cassini' || mission.id === 'cassini-huygens' || mission.id.includes('cassini') ||
+      mission.targetBody === 'Saturn' || mission.targetPlanet === 'Saturn'
+    ) {
+      // Cassini Saturn Orbit Insertion & Grand Finale Dive
+      const satObj = this.app.planets['Saturn'];
+      const satPos = new THREE.Vector3();
+      if (satObj && satObj.mesh) satObj.mesh.getWorldPosition(satPos);
+      else satPos.set(255, 0, 0);
+
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
+      points.push(earthPos.clone().add(new THREE.Vector3(12, 8, 8)));
+      points.push(new THREE.Vector3(140, 16, 35));
+      points.push(satPos.clone().add(new THREE.Vector3(-14, 15, -12)));
+      points.push(satPos.clone().add(new THREE.Vector3(-6, 8, 6))); // Ring plane crossing
+      points.push(satPos.clone().add(new THREE.Vector3(0, 3.8, 0))); // Grand Finale dive into atmosphere
+
+    } else if (mission.id.includes('jwst') || mission.id.includes('hubble') || mission.targetBody.includes('Lagrange') || mission.targetBody.includes('L2')) {
+      // Sun-Earth Lagrange L2 Halo Orbit
+      const dirEarthOut = earthPos.clone().normalize();
+      const l2Pos = earthPos.clone().add(dirEarthOut.clone().multiplyScalar(15.0));
+
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
+      points.push(earthPos.clone().add(new THREE.Vector3(2.5, 3.5, 1.5)));
+      points.push(earthPos.clone().add(dirEarthOut.clone().multiplyScalar(7.0)).add(new THREE.Vector3(0, 2.5, 0)));
+      points.push(l2Pos.clone().add(new THREE.Vector3(-1.5, 2.0, 1.5)));
+      points.push(l2Pos.clone().add(new THREE.Vector3(1.5, -1.5, -1.5)));
+      points.push(l2Pos.clone());
+
+    } else if (
+      mission.id === 'perseverance' || mission.id === 'curiosity' || mission.id === 'viking-1' ||
+      mission.id.includes('perseverance') || mission.id.includes('curiosity') || mission.id.includes('viking') ||
+      mission.id.includes('pathfinder') || mission.id.includes('spirit') ||
+      mission.targetBody === 'Mars' || mission.targetPlanet === 'Mars'
+    ) {
       // Sun-Centered Elliptical Hohmann Transfer Orbit to Mars
       const marsObj = this.app.planets['Mars'];
       const marsPos = new THREE.Vector3();
@@ -856,28 +1450,13 @@ class TrajectorySimulator {
 
       // Approach Mars entry interface
       points.push(marsPos.clone().add(new THREE.Vector3(-4.5, 5, -3.5)));
-      // Parachute & Skycrane descent
+      // Vertical terminal descent corridor directly above pad
+      points.push(marsPos.clone().add(new THREE.Vector3(-0.35, 4.2, -0.25)));
+      // Parachute & Skycrane touchdown on landing pad
       points.push(marsPos.clone().add(new THREE.Vector3(0, 3.2, 0)));
 
-    } else if (mission.id === 'voyager-1') {
-      // Earth -> Jupiter Gravity Assist -> Saturn Gravity Assist -> Interstellar Hyperbolic Escape
-      const jupObj = this.app.planets['Jupiter'];
-      const satObj = this.app.planets['Saturn'];
-
-      const jupPos = (jupObj && jupObj.mesh) ? jupObj.mesh.position.clone() : new THREE.Vector3(195, 0, 0);
-      const satPos = (satObj && satObj.mesh) ? satObj.mesh.position.clone() : new THREE.Vector3(255, 0, 0);
-
-      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
-      points.push(earthPos.clone().add(new THREE.Vector3(10, 7, 7)));
-      points.push(new THREE.Vector3().lerpVectors(earthPos, jupPos, 0.5).add(new THREE.Vector3(0, 6, -10)));
-      points.push(jupPos.clone().add(new THREE.Vector3(-14, 8, 12)));
-      points.push(new THREE.Vector3().lerpVectors(jupPos, satPos, 0.5).add(new THREE.Vector3(0, 18, -15)));
-      points.push(satPos.clone().add(new THREE.Vector3(-12, 22, -18)));
-      points.push(satPos.clone().add(new THREE.Vector3(90, 85, -120)));
-      points.push(satPos.clone().add(new THREE.Vector3(180, 160, -240)));
-
     } else {
-      // Default Interplanetary Arc (Cassini / general)
+      // Default Interplanetary Arc (general)
       const satObj = this.app.planets['Saturn'];
       const satPos = (satObj && satObj.mesh) ? satObj.mesh.position.clone() : new THREE.Vector3(255, 0, 0);
 
@@ -885,6 +1464,7 @@ class TrajectorySimulator {
       points.push(earthPos.clone().add(new THREE.Vector3(12, 9, 9)));
       points.push(new THREE.Vector3(140, 18, 40));
       points.push(satPos.clone().add(new THREE.Vector3(-8, 12, -8)));
+      points.push(satPos.clone().add(new THREE.Vector3(-0.4, 5.5, -0.4)));
       points.push(satPos.clone().add(new THREE.Vector3(0, 4, 0)));
     }
 
@@ -1095,6 +1675,31 @@ class TrajectorySimulator {
           <p id="fth-hazard-details" class="fth-hazard-text">Calculating orbital delta-v budget and trajectory correction maneuvers.</p>
         </div>
 
+        <!-- Interactive Fact & Specs Drawer: Expandable Accordions -->
+        <div class="fth-accordion-group">
+          <!-- Scientific Payloads Accordion -->
+          <div class="fth-accordion" id="fth-acc-payloads">
+            <button class="fth-accordion-header" id="fth-hdr-payloads" type="button">
+              <span>🔬 SCIENTIFIC PAYLOADS</span>
+              <span class="fth-accordion-chevron">▶</span>
+            </button>
+            <div class="fth-accordion-body" id="fth-body-payloads">
+              <!-- Dynamically populated payload cards -->
+            </div>
+          </div>
+
+          <!-- Mission Scorecard Accordion -->
+          <div class="fth-accordion" id="fth-acc-scorecard">
+            <button class="fth-accordion-header" id="fth-hdr-scorecard" type="button">
+              <span>📊 MISSION SCORECARD</span>
+              <span class="fth-accordion-chevron">▶</span>
+            </button>
+            <div class="fth-accordion-body" id="fth-body-scorecard">
+              <!-- Dynamically populated scorecard grid -->
+            </div>
+          </div>
+        </div>
+
         <!-- Climax Memorial Hardware Card (Displayed at 100% arrival) -->
         <div id="fth-memorial-card" class="fth-memorial-card hidden">
           <div class="fth-memorial-header">
@@ -1102,9 +1707,9 @@ class TrajectorySimulator {
             <h4 id="fth-memorial-site" class="fth-memorial-title">Mare Tranquillitatis</h4>
           </div>
           <div class="fth-memorial-meta">
-            <div class="fth-memorial-row"><span>Coordinates:</span> <strong id="fth-mem-coords">0.674° N, 23.473° E</strong></div>
-            <div class="fth-memorial-row"><span>Landing Date:</span> <strong id="fth-mem-date">July 20, 1969</strong></div>
-            <div class="fth-memorial-row"><span>Operational Life:</span> <strong id="fth-mem-sols">21.6 hours</strong></div>
+            <div class="fth-memorial-row"><span id="fth-mem-coords-label">Coordinates:</span> <strong id="fth-mem-coords">0.674° N, 23.473° E</strong></div>
+            <div class="fth-memorial-row"><span id="fth-mem-date-label">Landing Date:</span> <strong id="fth-mem-date">July 20, 1969</strong></div>
+            <div class="fth-memorial-row"><span id="fth-mem-sols-label">Operational Life:</span> <strong id="fth-mem-sols">21.6 hours</strong></div>
           </div>
           <p id="fth-mem-discard" class="fth-memorial-desc">Descent stage left resting on regolith.</p>
           <div class="fth-memorial-weathering">
@@ -1151,6 +1756,16 @@ class TrajectorySimulator {
         this.stopSimulation();
       });
     }
+
+    // Accordion toggle handlers
+    document.querySelectorAll('.fth-accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const accordion = header.closest('.fth-accordion');
+        if (accordion) {
+          accordion.classList.toggle('open');
+        }
+      });
+    });
 
     this.scrubberInput = document.getElementById('fth-timeline-scrubber');
     if (this.scrubberInput) {
@@ -1235,7 +1850,89 @@ class TrajectorySimulator {
 
   // --- 5. LAUNCH MISSION (MAIN ENTRY POINT) ---
   launchMission(missionId) {
-    const mission = this.missions[missionId] || this.missions['apollo-11'];
+    const idMap = {
+      'voyager-1-2': 'voyager-1-2',
+      'voyager-1': 'voyager-1-2',
+      'cassini-huygens': 'cassini-huygens',
+      'cassini': 'cassini-huygens',
+      'perseverance-ingenuity': 'perseverance-ingenuity',
+      'perseverance': 'perseverance-ingenuity',
+      'viking-1-2': 'viking-1-2',
+      'viking-1': 'viking-1-2',
+      'spirit-opportunity': 'spirit-opportunity',
+      'pathfinder-sojourner': 'pathfinder-sojourner',
+      'apollo-15': 'apollo-15',
+      'apollo-11': 'apollo-11',
+      'curiosity': 'curiosity',
+      'hubble-jwst': 'hubble-jwst'
+    };
+    const normId = idMap[missionId] || missionId;
+    let mission = this.missions[normId] || this.missions[missionId];
+
+    if (!mission && typeof window !== 'undefined' && window.NASADataEngine) {
+      const dataEngineMission = window.NASADataEngine.getMissionById(missionId) || window.NASADataEngine.getMissionById(normId);
+      if (dataEngineMission) {
+        let payloads = [];
+        if (dataEngineMission.spacecraftSpecs && Array.isArray(dataEngineMission.spacecraftSpecs.instruments)) {
+          payloads = dataEngineMission.spacecraftSpecs.instruments.map(inst => ({
+            name: inst.name || inst.acronym || 'Scientific Instrument',
+            acronym: inst.acronym || 'INSTR',
+            purpose: inst.purpose || inst.targetAnalysis || 'Planetary science investigation.'
+          }));
+        }
+        const scorecard = {
+          surfaceSols: dataEngineMission.solsActive || 'N/A',
+          distanceTraversed: dataEngineMission.distanceTotalKm ? `${(dataEngineMission.distanceTotalKm / 1e6).toFixed(1)}M km` : 'N/A',
+          massLeftBehind: (dataEngineMission.spacecraftSpecs && dataEngineMission.spacecraftSpecs.dryMassKg) ? `${dataEngineMission.spacecraftSpecs.dryMassKg.toLocaleString()} kg` : 'Hardware left on surface',
+          sampleMassReturned: (dataEngineMission.legacy && dataEngineMission.legacy.toLowerCase().includes('sample')) ? 'Samples Cached' : 'Telemetry Data Transmitted'
+        };
+
+        let targetBody = 'Mars';
+        let targetPlanet = 'Mars';
+        let craftType = 'lander';
+        if (dataEngineMission.landingSiteCoordinates && dataEngineMission.landingSiteCoordinates.celestialBody) {
+          targetBody = dataEngineMission.landingSiteCoordinates.celestialBody;
+          targetPlanet = targetBody;
+        } else if (dataEngineMission.fateCategory === 'deep_space') {
+          targetBody = 'Deep Space';
+          targetPlanet = 'Interstellar';
+          craftType = 'probe';
+        } else if (dataEngineMission.fateCategory === 'active_orbit' || (dataEngineMission.destinations && dataEngineMission.destinations.some(d => d.includes('L2')))) {
+          targetBody = 'Lagrange L2';
+          targetPlanet = 'Earth';
+          craftType = 'space-telescope';
+        } else if (dataEngineMission.destinations && dataEngineMission.destinations.length > 0) {
+          const dStr = dataEngineMission.destinations.join(' ');
+          if (dStr.includes('Saturn')) { targetBody = 'Saturn'; targetPlanet = 'Saturn'; craftType = 'probe'; }
+          else if (dStr.includes('Jupiter')) { targetBody = 'Jupiter'; targetPlanet = 'Jupiter'; craftType = 'probe'; }
+          else if (dStr.includes('Moon')) { targetBody = 'Moon'; targetPlanet = 'Earth'; craftType = 'lunar-module'; }
+          else if (dStr.includes('Mars')) { targetBody = 'Mars'; targetPlanet = 'Mars'; craftType = 'mars-rover'; }
+          else { targetBody = 'Deep Space'; targetPlanet = 'Interstellar'; craftType = 'probe'; }
+        }
+
+        mission = Object.assign({
+          targetBody: targetBody,
+          targetPlanet: targetPlanet,
+          craftType: craftType,
+          color: 0x38bdf8,
+          colorHex: '#38BDF8',
+          accentColor: '#38BDF8',
+          scientificPayloads: payloads,
+          scorecard: scorecard,
+          waypoints: [
+            { t: 0.15, label: 'EARTH DEPARTURE' },
+            { t: 0.50, label: 'INTERPLANETARY CRUISE' },
+            { t: 0.90, label: 'DESTINATION APPROACH' }
+          ],
+          phases: [
+            { threshold: 0.2, name: 'PHASE 1: LIFTOFF & MAX-Q', tag: 'LIFTOFF', hazard: 'Atmospheric dynamic pressure.', details: 'Booster ascent.' },
+            { threshold: 0.8, name: 'PHASE 2: INTERPLANETARY TRANSIT', tag: 'CRUISE', hazard: 'Deep space radiation.', details: 'Coast phase.' },
+            { threshold: 1.0, name: 'PHASE 3: TARGET ARRIVAL', tag: 'DESTINATION', hazard: 'Arrival at destination.', details: 'Stationary at destination.' }
+          ]
+        }, dataEngineMission);
+      }
+    }
+    if (!mission) mission = this.missions['apollo-11'];
     this.currentMission = mission;
     this.isActive = true;
     this.progress = 0.0;
@@ -1244,11 +1941,30 @@ class TrajectorySimulator {
     this.hasLanderPopped = false;
     this.cameraMode = 'follow';
 
-    // 1. Disable Camera Orbit Conflicts
+    // 1. Disable Camera Orbit Conflicts & Freeze Planetary Movement
     this.app.focusedObject = null;
     this.app.isTracking = false;
     this.wasAppPaused = this.app.isPaused;
     this.app.isPaused = true; // Lock planetary positions during flight simulation
+
+    // Align celestial bodies along authentic mission astrodynamics
+    this.alignPlanetsForMission(normId);
+
+    // Stop Earth axial rotation so Moon does not revolve in world space
+    if (this.app.planets && this.app.planets['Earth'] && this.app.planets['Earth'].data) {
+      if (this.app.planets['Earth'].data.rotationSpeedBackup === undefined) {
+        this.app.planets['Earth'].data.rotationSpeedBackup = this.app.planets['Earth'].data.rotationSpeed;
+      }
+      this.app.planets['Earth'].data.rotationSpeed = 0;
+    }
+
+    this.hasDustRingTriggered = false;
+
+    // Toggle Probe vs Rocket Accessories
+    const isProbe = (mission.craftType === 'probe' || mission.craftType === 'space-telescope' || normId.includes('voyager') || normId.includes('cassini'));
+    if (this.probeAddonGroup) this.probeAddonGroup.visible = isProbe;
+    if (this.rocketNoseGroup) this.rocketNoseGroup.visible = !isProbe;
+    if (this.rocketFinGroup) this.rocketFinGroup.visible = !isProbe;
 
     // 2. Setup Blastoff Hold (1.8s build-up on pad)
     this.isHoldingBlastoff = true;
@@ -1283,7 +1999,7 @@ class TrajectorySimulator {
       const earthPos = new THREE.Vector3();
       earthObj.mesh.getWorldPosition(earthPos);
 
-      const destCam = new THREE.Vector3(earthPos.x + 2.8, earthPos.y + 5.2, earthPos.z + 3.8);
+      const destCam = new THREE.Vector3(earthPos.x + 1.2, earthPos.y + 4.6, earthPos.z + 1.4);
       const destTarget = new THREE.Vector3(earthPos.x, earthPos.y + 4.0, earthPos.z);
 
       if (window.TWEEN) {
@@ -1314,6 +2030,13 @@ class TrajectorySimulator {
     if (t > 0.001) {
       this.isHoldingBlastoff = false;
     }
+    if (t < 0.85) {
+      this.hasDustRingTriggered = false;
+      if (this.dustRing) {
+        this.dustRing.material.opacity = 0.0;
+        this.dustRing.scale.set(1.0, 1.0, 1.0);
+      }
+    }
     this.progress = THREE.MathUtils.clamp(t, 0.0, 1.0);
     if (this.scrubberInput) {
       this.scrubberInput.value = Math.round(this.progress * 1000);
@@ -1328,23 +2051,206 @@ class TrajectorySimulator {
     this.updateHUDDisplay();
   }
 
+  // Helper: Get World Center of Destination Body
+  getDestinationCenter(mission) {
+    if (!mission) return null;
+    const targetBody = (mission.targetBody || '').toLowerCase();
+    const targetPlanet = (mission.targetPlanet || '').toLowerCase();
+
+    if (targetBody.includes('moon')) {
+      const earthObj = this.app.planets && this.app.planets['Earth'];
+      if (earthObj && earthObj.moons && earthObj.moons[0]) {
+        const p = new THREE.Vector3();
+        earthObj.moons[0].getWorldPosition(p);
+        return p;
+      }
+    }
+
+    const planetKeys = ['Mars', 'Saturn', 'Jupiter', 'Earth', 'Venus', 'Mercury', 'Uranus', 'Neptune'];
+    for (let k of planetKeys) {
+      if (targetBody.includes(k.toLowerCase()) || targetPlanet.includes(k.toLowerCase()) || (mission.id && mission.id.toLowerCase().includes(k.toLowerCase()))) {
+        const pl = this.app.planets && this.app.planets[k];
+        if (pl && pl.mesh) {
+          const p = new THREE.Vector3();
+          pl.mesh.getWorldPosition(p);
+          return p;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Helper: Get Outward Surface Normal at Landing Pad
+  getDestinationNormal() {
+    if (!this.trajectoryPoints || this.trajectoryPoints.length === 0) {
+      return new THREE.Vector3(0, 1, 0);
+    }
+    const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
+    const centerPos = this.getDestinationCenter(this.currentMission);
+    if (centerPos) {
+      const norm = new THREE.Vector3().subVectors(destPos, centerPos).normalize();
+      if (norm.lengthSq() > 0.001) return norm;
+    }
+    return new THREE.Vector3(0, 1, 0);
+  }
+
+  // Helper: Get Outward Surface Normal at Launch Pad (Earth)
+  getLaunchNormal() {
+    if (!this.trajectoryPoints || this.trajectoryPoints.length === 0) {
+      return new THREE.Vector3(0, 1, 0);
+    }
+    const launchPos = this.trajectoryPoints[0];
+    const earthObj = this.app.planets && this.app.planets['Earth'];
+    if (earthObj && earthObj.mesh) {
+      const earthPos = new THREE.Vector3();
+      earthObj.mesh.getWorldPosition(earthPos);
+      const norm = new THREE.Vector3().subVectors(launchPos, earthPos).normalize();
+      if (norm.lengthSq() > 0.001) return norm;
+    }
+    return new THREE.Vector3(0, 1, 0);
+  }
+
   updateRocketTransform() {
     if (!this.trajectoryCurve || !this.rocketGroup) return;
 
-    // Get current 3D position along curve
+    // 1. Get raw curve position and forward tangent
     const pos = this.trajectoryCurve.getPointAt(this.progress);
-    this.rocketGroup.position.copy(pos);
+    const tangent = this.trajectoryCurve.getTangentAt(Math.min(this.progress + 0.005, 1.0)).normalize();
 
-    // Orient rocket tangent to curve direction
-    const tangent = this.trajectoryCurve.getTangentAt(Math.min(this.progress + 0.005, 1.0));
-    const lookTarget = pos.clone().add(tangent);
-    this.rocketGroup.lookAt(lookTarget);
+    // 2. Compute Cruise Flight Quaternion (qFlight)
+    const dummy = new THREE.Object3D();
+    dummy.position.copy(pos);
+    dummy.lookAt(pos.clone().add(tangent));
+    dummy.rotateX(Math.PI / 2);
+    const qFlight = dummy.quaternion.clone();
 
-    // Rotate so nosecone (+Y) points along the forward flight tangent
-    this.rocketGroup.rotateX(Math.PI / 2);
+    // 3. Mission types
+    const isDeepSpace = this.currentMission && (
+      this.currentMission.targetBody === 'Deep Space' ||
+      (this.currentMission.id && this.currentMission.id.includes('voyager'))
+    );
+    const isMoonMission = this.currentMission && (
+      this.currentMission.id === 'apollo-11' ||
+      (this.currentMission.id && this.currentMission.id.includes('apollo')) ||
+      (this.currentMission.targetBody && this.currentMission.targetBody.toLowerCase().includes('moon')) ||
+      (this.currentMission.targetPlanet && this.currentMission.targetPlanet.toLowerCase().includes('moon'))
+    );
 
-    // Dynamic Chalk Flame Puffs Animation (Squash-and-Stretch Cartoon Fire)
-    const isEngineFiring = this.progress < 0.95;
+    // 4. Compute Upright Quaternion at Destination Landing Pad (qUprightLand)
+    const destNormal = this.getDestinationNormal();
+    const upLand = destNormal.clone().normalize();
+    let fwdLand = tangent.clone();
+    fwdLand.sub(upLand.clone().multiplyScalar(fwdLand.dot(upLand)));
+    if (fwdLand.lengthSq() < 0.001) {
+      fwdLand.set(0, 0, 1);
+      fwdLand.sub(upLand.clone().multiplyScalar(fwdLand.dot(upLand)));
+    }
+    if (fwdLand.lengthSq() < 0.001) {
+      fwdLand.set(1, 0, 0);
+      fwdLand.sub(upLand.clone().multiplyScalar(fwdLand.dot(upLand)));
+    }
+    fwdLand.normalize();
+    const rightLand = new THREE.Vector3().crossVectors(upLand, fwdLand).normalize();
+    const mLand = new THREE.Matrix4().makeBasis(rightLand, upLand, fwdLand);
+    const qUprightLand = new THREE.Quaternion().setFromRotationMatrix(mLand);
+
+    // 5. Compute Upright Quaternion at Launchpad on Earth (qUprightLaunch)
+    const launchNormal = this.getLaunchNormal();
+    const upLaunch = launchNormal.clone().normalize();
+    let fwdLaunch = tangent.clone();
+    fwdLaunch.sub(upLaunch.clone().multiplyScalar(fwdLaunch.dot(upLaunch)));
+    if (fwdLaunch.lengthSq() < 0.001) {
+      fwdLaunch.set(0, 0, 1);
+      fwdLaunch.sub(upLaunch.clone().multiplyScalar(fwdLaunch.dot(upLaunch)));
+    }
+    fwdLaunch.normalize();
+    const rightLaunch = new THREE.Vector3().crossVectors(upLaunch, fwdLaunch).normalize();
+    const mLaunch = new THREE.Matrix4().makeBasis(rightLaunch, upLaunch, fwdLaunch);
+    const qUprightLaunch = new THREE.Quaternion().setFromRotationMatrix(mLaunch);
+
+    // 6. Smoothly blend flight attitude into upright landing / liftoff attitude
+    const qTarget = new THREE.Quaternion().copy(qFlight);
+
+    // Landing flare factor: 0.0 during cruise, ramps smoothly to 1.0 upright at touchdown (t >= 0.95)
+    let landFactor = 0.0;
+    if (!isDeepSpace) {
+      landFactor = THREE.MathUtils.smoothstep(this.progress, 0.82, 0.95);
+      if (landFactor > 0.0) {
+        qTarget.slerpQuaternions(qFlight, qUprightLand, landFactor);
+      }
+    }
+
+    // Launch climb factor: 1.0 at pad, ramps down to 0.0 after initial liftoff
+    const launchFactor = 1.0 - THREE.MathUtils.smoothstep(this.progress, 0.0, 0.08);
+    if (launchFactor > 0.0) {
+      qTarget.slerpQuaternions(qTarget, qUprightLaunch, launchFactor);
+    }
+
+    this.rocketGroup.quaternion.copy(qTarget);
+
+    // 7. Base offset calculation
+    // Unscaled rocket nozzle lip is at y = -0.895. With scale = 0.16, offset = 0.895 * 0.16 = 0.1432
+    const rocketScale = 0.16;
+    const rocketBaseOffset = 0.895 * rocketScale;
+    const finalPos = pos.clone();
+
+    // Elevation offset for launchpad on Earth
+    if (launchFactor > 0.0) {
+      finalPos.add(upLaunch.clone().multiplyScalar(rocketBaseOffset * launchFactor));
+    }
+
+    // Dynamic Live Moon Surface Snapping (at t >= 0.85)
+    let moonObj = null;
+    if (isMoonMission) {
+      const earthObj = this.app.planets && this.app.planets['Earth'];
+      if (earthObj && earthObj.moons && earthObj.moons[0]) {
+        moonObj = earthObj.moons[0];
+      }
+    }
+
+    if (isMoonMission && moonObj && this.progress >= 0.85) {
+      const currentMoonPos = new THREE.Vector3();
+      moonObj.getWorldPosition(currentMoonPos);
+
+      let rMoon = 0.9;
+      if (moonObj.geometry && moonObj.geometry.parameters && moonObj.geometry.parameters.radius) {
+        rMoon = moonObj.geometry.parameters.radius;
+      } else if (moonObj.userData && moonObj.userData.moonData && moonObj.userData.moonData.radius) {
+        rMoon = moonObj.userData.moonData.radius;
+      }
+
+      // Exact physical surface touchdown formula: P_surface = P_moon + n_landing * (R_moon + rocketBaseOffset)
+      const surfaceLandingPos = currentMoonPos.clone().add(upLand.clone().multiplyScalar(rMoon + rocketBaseOffset));
+      const snapProgress = THREE.MathUtils.smoothstep(this.progress, 0.85, 1.0);
+
+      finalPos.lerp(surfaceLandingPos, snapProgress);
+
+      if (this.progress >= 0.999) {
+        finalPos.copy(surfaceLandingPos);
+      }
+
+      // Lock landing beacon to live moon surface
+      if (this.landingBeacon) {
+        const beaconPadPos = currentMoonPos.clone().add(upLand.clone().multiplyScalar(rMoon));
+        this.landingBeacon.position.copy(beaconPadPos);
+      }
+    } else if (!isDeepSpace && landFactor > 0.0) {
+      finalPos.add(upLand.clone().multiplyScalar(rocketBaseOffset * landFactor));
+    }
+
+    this.rocketGroup.position.copy(finalPos);
+
+    // 8. Toy rocket micro-bank/wobble (suppressed when seated on pad or flaring)
+    const wobbleFactor = (1.0 - landFactor) * (1.0 - launchFactor);
+    if (wobbleFactor > 0.02) {
+      const wobbleZ = Math.sin(Date.now() * 0.005) * 0.05 * wobbleFactor;
+      const wobbleY = Math.cos(Date.now() * 0.004) * 0.03 * wobbleFactor;
+      this.rocketGroup.rotateZ(wobbleZ);
+      this.rocketGroup.rotateY(wobbleY);
+    }
+
+    // 9. Engine Flame Cutoff & Dust Shockwave at t >= 0.95
+    const isEngineFiring = this.progress > 0.001 && (!isDeepSpace ? this.progress < 0.95 : this.progress < 0.99);
     if (this.flamePuff1 && this.flamePuff2 && this.flamePuff3) {
       this.flamePuff1.visible = isEngineFiring;
       this.flamePuff2.visible = isEngineFiring;
@@ -1365,21 +2271,25 @@ class TrajectorySimulator {
       }
     }
 
-    // Playful toy rocket micro-bank/wobble for cute cartoony flight feel
-    const wobbleZ = Math.sin(Date.now() * 0.005) * 0.05;
-    const wobbleY = Math.cos(Date.now() * 0.004) * 0.03;
-    this.rocketGroup.rotateZ(wobbleZ);
-    this.rocketGroup.rotateY(wobbleY);
+    // Regolith chalk dust ring shockwave at touchdown
+    if (!isDeepSpace && this.progress >= 0.95) {
+      this.triggerDustRing();
+    }
 
-    // Destination Chalk Landing Beacon & Pop-up Lander
+    // 10. Destination Chalk Landing Beacon & Pop-up Lander
     if (this.landingBeacon) {
-      const showLanding = this.progress >= 0.90;
+      const showLanding = !isDeepSpace && this.progress >= 0.80;
       this.landingBeacon.visible = showLanding;
-      if (showLanding && this.trajectoryPoints.length > 0) {
-        const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
-        this.landingBeacon.position.copy(destPos);
+      if (showLanding) {
+        if (!isMoonMission && this.trajectoryPoints.length > 0) {
+          const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
+          this.landingBeacon.position.copy(destPos);
+        }
 
-        // Trigger Pop-up Lander bounce animation
+        const defaultBeaconUp = new THREE.Vector3(0, 1, 0);
+        this.landingBeacon.quaternion.setFromUnitVectors(defaultBeaconUp, destNormal);
+
+        // Pop-up Lander bounce animation & resting lander display at t = 1.0
         if (!this.hasLanderPopped && window.TWEEN && this.chalkLander) {
           this.hasLanderPopped = true;
           this.chalkLander.scale.set(0.001, 0.001, 0.001);
@@ -1387,6 +2297,8 @@ class TrajectorySimulator {
             .to({ x: 1, y: 1, z: 1 }, 700)
             .easing(TWEEN.Easing.Back.Out)
             .start();
+        } else if (this.progress >= 0.999 && this.chalkLander) {
+          this.chalkLander.scale.set(1, 1, 1);
         }
       } else {
         this.hasLanderPopped = false;
@@ -1476,23 +2388,23 @@ class TrajectorySimulator {
         if (earthObj && earthObj.mesh) earthObj.mesh.getWorldPosition(earthPos);
         else earthPos.set(95, 0, 0);
 
-        const stageAPos = new THREE.Vector3(earthPos.x + 2.8, earthPos.y + 5.2, earthPos.z + 3.8);
+        const stageAPos = new THREE.Vector3(earthPos.x + 1.2, earthPos.y + 4.6, earthPos.z + 1.4);
         this.camera.position.lerp(stageAPos, 0.06);
         this.controls.target.lerp(rocketPos, 0.12);
 
       } else if (this.progress >= 0.90) {
-        // Stage C (Arrival & Landing Site Climax): Tight framing on destination landing site
+        // Stage C (Arrival & Landing Site Climax): Tight intimate framing on destination landing site
         if (this.trajectoryPoints.length > 0) {
-          const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
-          const destCamOffset = new THREE.Vector3(3.2, 2.4, 3.6);
+          const destPos = this.rocketGroup.position;
+          const destCamOffset = new THREE.Vector3(1.1, 0.7, 1.2);
           const desiredDestCam = destPos.clone().add(destCamOffset);
 
           this.camera.position.lerp(desiredDestCam, 0.06);
-          this.controls.target.lerp(destPos, 0.08);
+          this.controls.target.lerp(destPos, 0.12);
         }
 
       } else {
-        // Stage B (Interplanetary Chase Cam): 3/4 tight chase view showcasing cute rocket details
+        // Stage B (Interplanetary Chase Cam): Intimate close-up view showcasing cute rocket details
         const tangent = this.trajectoryCurve.getTangentAt(Math.min(this.progress + 0.005, 1.0));
         const up = new THREE.Vector3(0, 1, 0);
         let side = new THREE.Vector3().crossVectors(tangent, up).normalize();
@@ -1500,9 +2412,9 @@ class TrajectorySimulator {
           side = new THREE.Vector3(1, 0, 0);
         }
 
-        const camOffset = tangent.clone().negate().multiplyScalar(3.2)
-          .add(side.multiplyScalar(1.2))
-          .add(new THREE.Vector3(0, 1.0, 0));
+        const camOffset = tangent.clone().negate().multiplyScalar(1.6)
+          .add(side.multiplyScalar(0.55))
+          .add(new THREE.Vector3(0, 0.45, 0));
         const desiredCamPos = rocketPos.clone().add(camOffset);
 
         this.camera.position.lerp(desiredCamPos, 0.08);
@@ -1587,16 +2499,74 @@ class TrajectorySimulator {
     if (latencyValEl) {
       if (latencySec < 60) {
         latencyValEl.textContent = `${latencySec.toFixed(2)} sec`;
-      } else {
+      } else if (latencySec < 3600) {
         const mins = Math.floor(latencySec / 60);
         const secs = Math.round(latencySec % 60);
         latencyValEl.textContent = `${mins}m ${secs}s`;
+      } else {
+        const hours = Math.floor(latencySec / 3600);
+        const mins = Math.floor((latencySec % 3600) / 60);
+        latencyValEl.textContent = `${hours}h ${mins}m`;
       }
     }
 
-    // Fuel remaining
-    const fuelPct = Math.max(0, Math.round(100 - (this.progress * 82)));
-    if (fuelValEl) fuelValEl.textContent = `${fuelPct}%`;
+    // Power remaining (Fuel for chemical rockets, radioactive decay for RTG nuclear probes)
+    const isProbe = (mission.craftType === 'probe' || mission.craftType === 'space-telescope' || (mission.id && (mission.id.includes('voyager') || mission.id.includes('cassini'))));
+    if (isProbe) {
+      const rtgPct = Math.max(38, Math.round(100 - (this.progress * 58)));
+      if (fuelValEl) fuelValEl.textContent = `${rtgPct}% (RTG)`;
+    } else {
+      const fuelPct = Math.max(0, Math.round(100 - (this.progress * 82)));
+      if (fuelValEl) fuelValEl.textContent = `${fuelPct}%`;
+    }
+
+    // Update Interactive Accordions (Payloads & Scorecard)
+    const payloadsBody = document.getElementById('fth-body-payloads');
+    if (payloadsBody) {
+      if (mission.scientificPayloads && mission.scientificPayloads.length > 0) {
+        payloadsBody.innerHTML = mission.scientificPayloads.map(p => `
+          <div class="fth-payload-card">
+            <div class="fth-payload-head">
+              <span class="fth-payload-name">${p.name}</span>
+              <span class="fth-payload-acronym">${p.acronym}</span>
+            </div>
+            <p class="fth-payload-purpose">${p.purpose}</p>
+          </div>
+        `).join('');
+      } else {
+        payloadsBody.innerHTML = '<p class="fth-payload-purpose">Telemetry sensors & communication transponders.</p>';
+      }
+    }
+
+    const scorecardBody = document.getElementById('fth-body-scorecard');
+    if (scorecardBody) {
+      const sc = mission.scorecard || {
+        surfaceSols: mission.solsActive || 'N/A',
+        distanceTraversed: mission.distanceTotalKm ? `${(mission.distanceTotalKm / 1e6).toFixed(1)}M km` : 'N/A',
+        massLeftBehind: 'Hardware Abandoned',
+        sampleMassReturned: 'Data Transmitted'
+      };
+      scorecardBody.innerHTML = `
+        <div class="fth-scorecard-grid">
+          <div class="fth-scorecard-item">
+            <div class="fth-scorecard-label">Sols on Surface</div>
+            <div class="fth-scorecard-val">${sc.surfaceSols}</div>
+          </div>
+          <div class="fth-scorecard-item">
+            <div class="fth-scorecard-label">Distance Traversed</div>
+            <div class="fth-scorecard-val">${sc.distanceTraversed}</div>
+          </div>
+          <div class="fth-scorecard-item">
+            <div class="fth-scorecard-label">Mass Left Behind</div>
+            <div class="fth-scorecard-val">${sc.massLeftBehind}</div>
+          </div>
+          <div class="fth-scorecard-item">
+            <div class="fth-scorecard-label">Sample Mass Returned</div>
+            <div class="fth-scorecard-val">${sc.sampleMassReturned}</div>
+          </div>
+        </div>
+      `;
+    }
 
     // Memorial Hardware Card Display (when progress >= 90%)
     const memorialCard = document.getElementById('fth-memorial-card');
@@ -1611,6 +2581,25 @@ class TrajectorySimulator {
         const solsEl = document.getElementById('fth-mem-sols');
         const descEl = document.getElementById('fth-mem-discard');
         const weatherEl = document.getElementById('fth-mem-weathering');
+
+        const coordsLbl = document.getElementById('fth-mem-coords-label');
+        const dateLbl = document.getElementById('fth-mem-date-label');
+        const solsLbl = document.getElementById('fth-mem-sols-label');
+
+        const isDeepSpace = (mission.targetBody === 'Deep Space' || mission.targetPlanet === 'Interstellar' || (mission.id && mission.id.includes('voyager')));
+        if (isDeepSpace) {
+          if (coordsLbl) coordsLbl.textContent = 'Current Region:';
+          if (dateLbl) dateLbl.textContent = 'Heliopause Crossed:';
+          if (solsLbl) solsLbl.textContent = 'Mission Life:';
+        } else if (mission.targetBody === 'Saturn') {
+          if (coordsLbl) coordsLbl.textContent = 'Entry Location:';
+          if (dateLbl) dateLbl.textContent = 'Grand Finale:';
+          if (solsLbl) solsLbl.textContent = 'Flight Time:';
+        } else {
+          if (coordsLbl) coordsLbl.textContent = 'Coordinates:';
+          if (dateLbl) dateLbl.textContent = 'Landing Date:';
+          if (solsLbl) solsLbl.textContent = 'Operational Life:';
+        }
 
         if (siteEl) siteEl.textContent = mission.landingSite;
         if (coordsEl) coordsEl.textContent = mission.landingCoords;
@@ -1634,17 +2623,36 @@ class TrajectorySimulator {
     if (this.landingBeacon) this.landingBeacon.visible = false;
     if (this.chalkDashedLine) this.chalkDashedLine.visible = false;
     if (this.trajectoryTube) this.trajectoryTube.visible = false;
+    if (this.secondaryChalkLine) this.secondaryChalkLine.visible = false;
     if (this.activeTrailMesh) this.activeTrailMesh.visible = false;
     if (this.waypointGroup) this.waypointGroup.visible = false;
+
+    // Reset probe accessory toggles
+    if (this.probeAddonGroup) this.probeAddonGroup.visible = false;
+    if (this.rocketNoseGroup) this.rocketNoseGroup.visible = true;
+    if (this.rocketFinGroup) this.rocketFinGroup.visible = true;
 
     if (this.particles) {
       this.particles.forEach(p => p.visible = false);
     }
 
-    // Restore planetary orbits
+    // Restore planetary orbits & Earth axial rotation
     if (this.wasAppPaused !== undefined) {
       this.app.isPaused = this.wasAppPaused;
     }
+    if (this.app.planets && this.app.planets['Earth'] && this.app.planets['Earth'].data) {
+      if (this.app.planets['Earth'].data.rotationSpeedBackup !== undefined) {
+        this.app.planets['Earth'].data.rotationSpeed = this.app.planets['Earth'].data.rotationSpeedBackup;
+        delete this.app.planets['Earth'].data.rotationSpeedBackup;
+      }
+    }
+    this.restorePlanetPositions();
+
+    if (this.dustRing) {
+      this.dustRing.material.opacity = 0.0;
+      this.dustRing.scale.set(1.0, 1.0, 1.0);
+    }
+    this.hasDustRingTriggered = false;
 
     // Hide simulation HUDs
     document.body.classList.remove('in-trajectory-simulation');

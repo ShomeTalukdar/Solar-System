@@ -348,19 +348,27 @@ class NavigationShell {
   }
 
   filterMissionCatalog(query) {
+    if (window.missionArchiveEngine) {
+      window.missionArchiveEngine.setSearch(query);
+      return;
+    }
     const term = (query || '').toLowerCase().trim();
-    const cards = document.querySelectorAll('.mission-catalog-card');
+    const cards = document.querySelectorAll('.mission-catalog-card, .archive-mission-card');
 
     cards.forEach(card => {
-      const title = (card.querySelector('.catalog-card-title')?.textContent || '').toLowerCase();
-      const body = (card.querySelector('.catalog-card-body')?.textContent || '').toLowerCase();
+      const title = (card.querySelector('.catalog-card-title, .card-mission-title')?.textContent || '').toLowerCase();
+      const body = (card.querySelector('.catalog-card-body, .card-callsign-sub')?.textContent || '').toLowerCase();
       const match = !term || title.includes(term) || body.includes(term);
       card.style.display = match ? 'flex' : 'none';
     });
   }
 
   filterByCategory(category) {
-    const cards = document.querySelectorAll('.mission-catalog-card');
+    if (window.missionArchiveEngine) {
+      window.missionArchiveEngine.setDestination(category.toLowerCase());
+      return;
+    }
+    const cards = document.querySelectorAll('.mission-catalog-card, .archive-mission-card');
     cards.forEach(card => {
       if (category === 'all' || card.dataset.category === category) {
         card.style.display = 'flex';

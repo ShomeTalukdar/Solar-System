@@ -2183,18 +2183,21 @@ class SolarSystemApp {
       }
     }
 
-    if (this.earthCloudMesh) {
-      this.earthCloudMesh.rotation.y += 0.012 * (this.isPaused ? 0.1 : this.timeSpeed);
-    }
+    const isTrajectoryActive = this.trajectorySimulator && this.trajectorySimulator.isActive;
+    const simSpeed = (this.isPaused || isTrajectoryActive) ? 0 : this.timeSpeed;
 
-    const simSpeed = this.isPaused ? 0 : this.timeSpeed;
+    if (this.earthCloudMesh) {
+      const cloudMult = isTrajectoryActive ? 0 : (this.isPaused ? 0.1 : this.timeSpeed);
+      this.earthCloudMesh.rotation.y += 0.012 * cloudMult;
+    }
 
     this.updateAsteroids(simSpeed);
 
     Object.keys(this.planets).forEach(name => {
       const p = this.planets[name];
+      const rotMult = isTrajectoryActive ? 0 : (this.isPaused ? 0.1 : this.timeSpeed);
 
-      p.mesh.rotation.y += p.data.rotationSpeed * (this.isPaused ? 0.1 : this.timeSpeed);
+      p.mesh.rotation.y += p.data.rotationSpeed * rotMult;
 
       p.angle += p.data.speed * 0.4 * simSpeed;
       p.mesh.position.x = Math.cos(p.angle) * p.data.distance;
@@ -2207,7 +2210,8 @@ class SolarSystemApp {
           m.position.z = Math.sin(m.userData.angle) * m.userData.distance;
           // Moon self-rotation on its axis
           if (m.userData.rotationSpeed) {
-            m.rotation.y += m.userData.rotationSpeed * (this.isPaused ? 0.1 : this.timeSpeed);
+            const moonRotMult = isTrajectoryActive ? 0 : (this.isPaused ? 0.1 : this.timeSpeed);
+            m.rotation.y += m.userData.rotationSpeed * moonRotMult;
           }
         });
       }

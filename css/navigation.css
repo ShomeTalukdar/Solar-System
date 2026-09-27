@@ -1604,6 +1604,141 @@ body.panel-open #radar-widget {
   box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
 }
 
+/* Educational Accordion Drawers */
+.fth-accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fth-accordion {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.fth-accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: #e2e8f0;
+  font-family: var(--font-orbitron);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.fth-accordion-header:hover {
+  background: rgba(56, 189, 248, 0.18);
+  color: #ffffff;
+}
+
+.fth-accordion-chevron {
+  font-size: 0.65rem;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #38bdf8;
+}
+
+.fth-accordion.open .fth-accordion-chevron {
+  transform: rotate(90deg);
+}
+
+.fth-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+  padding: 0 12px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.fth-accordion.open .fth-accordion-body {
+  max-height: 480px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fth-scorecard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fth-scorecard-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--accent-cyan);
+  padding: 5px 8px;
+  border-radius: 0 4px 4px 0;
+}
+
+.fth-scorecard-label {
+  font-size: 0.52rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-family: var(--font-orbitron);
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.fth-scorecard-val {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.fth-payload-card {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fth-payload-card:last-child {
+  border-bottom: none;
+}
+
+.fth-payload-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.fth-payload-name {
+  color: #38bdf8;
+  font-weight: 700;
+  font-size: 0.72rem;
+  font-family: var(--font-orbitron);
+}
+
+.fth-payload-acronym {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #38bdf8;
+  font-family: var(--font-orbitron);
+}
+
+.fth-payload-purpose {
+  font-size: 0.69rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin: 0;
+}
+
+
 /* --- TOP-LEFT EXIT SIMULATION BAR --- */
 .simulation-exit-bar {
   position: fixed;

@@ -17,6 +17,7 @@
   
   <link rel="stylesheet" href="style.css?v=2.3">
   <link rel="stylesheet" href="css/navigation.css?v=2.3">
+  <link rel="stylesheet" href="css/archive.css?v=1.0">
   
   <!-- Critical Infallible Stacking Styles -->
   <style>
@@ -157,132 +158,105 @@
   <!-- Focused View Panels Container (Only ONE active at a time) -->
   <div id="views-container" class="views-container" aria-live="polite">
 
-    <!-- 1. ARCHIVE: Mission Catalog -->
+    <!-- 1. ARCHIVE: Mission Catalog & Hardware Filter Engine -->
     <section id="view-archive" class="view-panel" data-view="archive">
       <div class="view-panel-header">
         <div class="view-breadcrumb">
-          <span class="view-system-pill">[ ARCHIVE ]</span>
-          <h2 class="view-title-main">Mission Catalog</h2>
+          <span class="view-system-pill">[ ARCHIVE // HISTORIC CATALOG ]</span>
+          <h2 class="view-title-main">Mission Archive & Hardware Registry</h2>
         </div>
         <button class="view-close-btn">✕ Return to Orbit</button>
       </div>
 
       <div class="view-panel-body">
         <div class="view-intro-hero">
-          <h3 class="view-intro-title">Exploration Voyages of the Space Age</h3>
-          <p class="view-intro-desc">Browse robotic and crewed voyages across the Solar System. Select any mission to jump directly to its target in 3D orbit.</p>
+          <div class="archive-hero-badge">NASA SPACE APPS CHALLENGE • WHERE THEY REMAIN</div>
+          <h3 class="view-intro-title">Storytelling About NASA's Discarded Equipment on the Moon and Mars</h3>
+          <p class="view-intro-desc">
+            Explore 10 seminal NASA deep-space and planetary expeditions. Discover the scientific reasons why critical hardware was left behind, how unfiltered cosmic space weathering has transformed these monuments, and track their resting sites across the cosmos.
+          </p>
         </div>
 
+        <!-- Telemetry Statistics & Mission Counter -->
+        <div class="archive-telemetry-banner">
+          <div class="archive-counter-live" id="archive-counter-live">
+            Displaying <strong id="archive-count-visible">10</strong> of 10 Historic NASA Missions
+            <span class="archive-counter-sep">|</span>
+            <span class="archive-pill-stat moon"><span class="stat-dot moon"></span><strong id="archive-count-moon">2</strong> Resting on Lunar Surface</span>
+            <span class="archive-counter-sep">|</span>
+            <span class="archive-pill-stat mars"><span class="stat-dot mars"></span><strong id="archive-count-mars">3</strong> Silent on Mars</span>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
         <div class="archive-toolbar">
+          <!-- Realtime Search Input -->
           <div class="archive-search-box">
             <span class="archive-search-icon">🔍</span>
-            <input type="text" id="archive-search-input" class="archive-search-input" placeholder="Search mission name or destination...">
+            <input type="text" id="archive-search-input" class="archive-search-input" placeholder="Search by mission, callsign, body, or instrument..." autocomplete="off">
+            <button id="archive-search-clear" class="archive-search-clear hidden" title="Clear search">✕</button>
           </div>
 
-          <div class="archive-filter-chips">
-            <button class="filter-chip active" data-category="all">All</button>
-            <button class="filter-chip" data-category="Lunar">Moon</button>
-            <button class="filter-chip" data-category="Mars">Mars</button>
-            <button class="filter-chip" data-category="Deep Space">Deep Space</button>
+          <!-- Destination Selector & Sort Dropdowns -->
+          <div class="archive-dropdowns-row">
+            <div class="archive-select-group">
+              <label for="archive-dest-select" class="archive-select-label">DESTINATION:</label>
+              <select id="archive-dest-select" class="archive-select">
+                <option value="all">All Destinations</option>
+                <option value="moon">Moon</option>
+                <option value="mars">Mars</option>
+                <option value="saturn">Saturn</option>
+                <option value="outer">Outer Solar System</option>
+                <option value="l2">L2 / Deep Space</option>
+              </select>
+            </div>
+
+            <div class="archive-select-group">
+              <label for="archive-sort-select" class="archive-select-label">SORT BY:</label>
+              <select id="archive-sort-select" class="archive-select">
+                <option value="launch-desc">Launch Date (Newest)</option>
+                <option value="launch-asc">Launch Date (Oldest)</option>
+                <option value="mass-desc">Spacecraft Mass (Heaviest)</option>
+                <option value="mass-asc">Spacecraft Mass (Lightest)</option>
+                <option value="distance-desc">Distance from Earth (Furthest)</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="mission-catalog-grid">
-          <article class="mission-catalog-card" data-category="Lunar">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">Apollo 11</h4>
-                <div class="catalog-card-sub">Lunar Landing • 1969</div>
-              </div>
-              <span class="radar-target-pill">MOON</span>
-            </div>
-            <p class="catalog-card-body">The first crewed landing on the Moon. Neil Armstrong and Buzz Aldrin landed the Lunar Module Eagle at Tranquility Base while Michael Collins orbited above.</p>
-            <div class="catalog-card-meta">
-              <span>Status: <strong>Preserved at Base</strong></span>
-              <span>Coordinates: <strong>0.674° N, 23.473° E</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="apollo-11" data-target-planet="Earth">▶ Track in 3D</button>
-          </article>
+        <!-- Hardware Fate Filter Pills -->
+        <div class="archive-fate-pills" id="archive-fate-pills">
+          <button class="fate-pill active" data-fate="all">
+            <span class="fate-dot all"></span> All Missions (<span id="fate-count-all">10</span>)
+          </button>
+          <button class="fate-pill" data-fate="resting_moon">
+            <span class="fate-dot moon"></span> Resting on Moon (<span id="fate-count-moon">2</span>)
+          </button>
+          <button class="fate-pill" data-fate="silent_mars">
+            <span class="fate-dot mars"></span> Silent on Mars (<span id="fate-count-mars">3</span>)
+          </button>
+          <button class="fate-pill" data-fate="deep_space">
+            <span class="fate-dot deep_space"></span> Deep Space / Interstellar (<span id="fate-count-deep">1</span>)
+          </button>
+          <button class="fate-pill" data-fate="sacrificial_plunge">
+            <span class="fate-dot plunge"></span> Sacrificial Plunge (<span id="fate-count-plunge">1</span>)
+          </button>
+          <button class="fate-pill" data-fate="active_surface">
+            <span class="fate-dot active"></span> Active Surface (<span id="fate-count-active">2</span>)
+          </button>
+        </div>
 
-          <article class="mission-catalog-card" data-category="Mars">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">Perseverance</h4>
-                <div class="catalog-card-sub">Mars 2020 Rover • 2020</div>
-              </div>
-              <span class="radar-target-pill" style="color:#fdba74;">MARS</span>
-            </div>
-            <p class="catalog-card-body">Astrobiology rover exploring the ancient river delta in Jezero Crater, seeking biosignatures, and caching rock cores for future sample return.</p>
-            <div class="catalog-card-meta">
-              <span>Status: <strong>Active Rover</strong></span>
-              <span>Site: <strong>Jezero Crater</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="perseverance" data-target-planet="Mars">▶ Track in 3D</button>
-          </article>
+        <!-- Dynamic Mission Cards Grid -->
+        <div id="mission-catalog-grid" class="mission-catalog-grid" aria-live="polite">
+          <!-- Populated dynamically by archive.js -->
+        </div>
 
-          <article class="mission-catalog-card" data-category="Deep Space">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">Voyager 1</h4>
-                <div class="catalog-card-sub">Interstellar Probe • 1977</div>
-              </div>
-              <span class="radar-target-pill" style="color:#c084fc;">DEEP SPACE</span>
-            </div>
-            <p class="catalog-card-body">Humanity's most distant emissary, now traveling through interstellar space beyond the Sun's heliosphere with the Golden Record aboard.</p>
-            <div class="catalog-card-meta">
-              <span>Distance: <strong>24.4B km (163 AU)</strong></span>
-              <span>Speed: <strong>17.0 km/s</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="voyager-1" data-target-planet="Sun">▶ Track in 3D</button>
-          </article>
-
-          <article class="mission-catalog-card" data-category="Mars">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">Curiosity</h4>
-                <div class="catalog-card-sub">Mars Science Laboratory • 2011</div>
-              </div>
-              <span class="radar-target-pill" style="color:#fdba74;">MARS</span>
-            </div>
-            <p class="catalog-card-body">Nuclear-powered robotic rover examining layered sedimentary rocks on Mount Sharp in Gale Crater, establishing that ancient Mars once had habitable water lakes.</p>
-            <div class="catalog-card-meta">
-              <span>Status: <strong>Active Laboratory</strong></span>
-              <span>Site: <strong>Mount Sharp</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="curiosity" data-target-planet="Mars">▶ Track in 3D</button>
-          </article>
-
-          <article class="mission-catalog-card" data-category="Deep Space">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">New Horizons</h4>
-                <div class="catalog-card-sub">Kuiper Belt Explorer • 2006</div>
-              </div>
-              <span class="radar-target-pill" style="color:#c084fc;">DEEP SPACE</span>
-            </div>
-            <p class="catalog-card-body">Conducted the historic first flyby of dwarf planet Pluto and its moon Charon, revealing active nitrogen ice glaciers, before exploring planetesimal Arrokoth.</p>
-            <div class="catalog-card-meta">
-              <span>Status: <strong>Kuiper Belt Drift</strong></span>
-              <span>Distance: <strong>8.6B km</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="voyager-1" data-target-planet="Neptune">▶ Track in 3D</button>
-          </article>
-
-          <article class="mission-catalog-card" data-category="Lunar">
-            <div class="catalog-card-header">
-              <div>
-                <h4 class="catalog-card-title">Artemis I</h4>
-                <div class="catalog-card-sub">SLS & Orion • 2022</div>
-              </div>
-              <span class="radar-target-pill">MOON</span>
-            </div>
-            <p class="catalog-card-body">Flight test of the Space Launch System rocket and Orion capsule, demonstrating deep-space reentry speeds and validating human-rated systems for lunar return.</p>
-            <div class="catalog-card-meta">
-              <span>Status: <strong>Mission Complete</strong></span>
-              <span>Max Dist: <strong>432,210 km</strong></span>
-            </div>
-            <button class="catalog-card-btn card-track-3d" data-mission-id="apollo-11" data-target-planet="Earth">▶ Track in 3D</button>
-          </article>
+        <!-- Empty State Container -->
+        <div id="archive-empty-state" class="archive-empty-state hidden">
+          <div class="empty-state-icon">📡</div>
+          <h4 class="empty-state-title">No Spacecraft Matching Filter Criteria</h4>
+          <p class="empty-state-desc">No missions were found matching your current search query and fate filter. Try adjusting your search term or clearing the active filters.</p>
+          <button id="archive-btn-reset-filters" class="archive-reset-btn">↺ Reset All Filters</button>
         </div>
       </div>
     </section>
@@ -792,7 +766,9 @@
     <button class="dock-dot-btn" data-planet="Neptune" title="Neptune"><span class="dot neptune-dot"></span><span>Nep</span></button>
   </nav>
 
+  <script src="js/data/missions-data.js?v=2.5"></script>
   <script src="js/modules/navigation.js?v=2.3"></script>
+  <script src="js/modules/archive.js?v=1.0"></script>
   <script src="js/modules/trajectory-simulator.js?v=2.4"></script>
   <script src="script.js?v=2.3"></script>
 </body>

@@ -1,0 +1,813 @@
+/* ==========================================================================
+   MISSION ARCHIVE & FILTER ENGINE (STAGE 3)
+   High-Tech Glassmorphism Catalog for NASA Historic Hardware
+   Theme: "Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment"
+   ========================================================================== */
+
+/* --- ROOT VARIABLES & FATE COLOR TOKENS --- */
+:root {
+  --fate-moon: #8cc8ff;
+  --fate-moon-glow: rgba(140, 200, 255, 0.35);
+  --fate-moon-bg: rgba(140, 200, 255, 0.12);
+
+  --fate-mars: #f97316;
+  --fate-mars-glow: rgba(249, 115, 22, 0.35);
+  --fate-mars-bg: rgba(249, 115, 22, 0.12);
+
+  --fate-deep-space: #facc15;
+  --fate-deep-space-glow: rgba(250, 204, 21, 0.35);
+  --fate-deep-space-bg: rgba(250, 204, 21, 0.12);
+
+  --fate-plunge: #8b5cf6;
+  --fate-plunge-glow: rgba(139, 92, 246, 0.35);
+  --fate-plunge-bg: rgba(139, 92, 246, 0.12);
+
+  --fate-active: #10b981;
+  --fate-active-glow: rgba(16, 185, 129, 0.35);
+  --fate-active-bg: rgba(16, 185, 129, 0.12);
+
+  --fate-orbit: #06b6d4;
+  --fate-orbit-glow: rgba(6, 182, 212, 0.35);
+  --fate-orbit-bg: rgba(6, 182, 212, 0.12);
+
+  --archive-glass-bg: rgba(8, 14, 30, 0.76);
+  --archive-card-bg: rgba(11, 18, 38, 0.72);
+  --archive-border: rgba(255, 255, 255, 0.08);
+  --archive-border-hover: rgba(56, 189, 248, 0.45);
+}
+
+/* --- HERO INTRO BADGE & TITLES --- */
+.archive-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+  font-family: var(--font-orbitron);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* --- LIVE TELEMETRY STATISTICS COUNTER --- */
+.archive-telemetry-banner {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #38bdf8;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(12px);
+}
+
+.archive-counter-live {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: var(--font-inter);
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.archive-counter-live strong {
+  color: #f1f5f9;
+  font-family: var(--font-orbitron);
+  font-weight: 700;
+}
+
+.archive-counter-sep {
+  color: rgba(255, 255, 255, 0.18);
+  font-weight: 300;
+}
+
+.archive-pill-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+}
+
+.archive-pill-stat.moon {
+  background: var(--fate-moon-bg);
+  color: var(--fate-moon);
+}
+
+.archive-pill-stat.mars {
+  background: var(--fate-mars-bg);
+  color: var(--fate-mars);
+}
+
+.stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.stat-dot.moon {
+  background: var(--fate-moon);
+  box-shadow: 0 0 6px var(--fate-moon-glow);
+}
+
+.stat-dot.mars {
+  background: var(--fate-mars);
+  box-shadow: 0 0 6px var(--fate-mars-glow);
+}
+
+/* --- TOOLBAR: SEARCH & SELECTORS --- */
+.archive-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.archive-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  max-width: 440px;
+}
+
+.archive-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  background: rgba(11, 19, 43, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: var(--font-inter);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.archive-search-input:focus {
+  border-color: #38bdf8;
+  background: rgba(15, 23, 52, 0.9);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.archive-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.archive-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.archive-search-clear:hover {
+  background: rgba(244, 63, 94, 0.3);
+  color: #f43f5e;
+}
+
+.archive-search-clear.hidden {
+  display: none;
+}
+
+.archive-dropdowns-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.archive-select-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.archive-select-label {
+  font-family: var(--font-orbitron);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.archive-select {
+  padding: 8px 30px 8px 12px;
+  background: rgba(11, 19, 43, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-family: var(--font-inter);
+  font-size: 0.78rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.archive-select:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.archive-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.archive-select option {
+  background: #0b132b;
+  color: #f1f5f9;
+}
+
+/* --- HARDWARE FATE FILTER PILLS --- */
+.archive-fate-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.archive-fate-pills::-webkit-scrollbar {
+  height: 4px;
+}
+
+.archive-fate-pills::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.fate-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: #94a3b8;
+  font-family: var(--font-orbitron);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fate-pill:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.fate-pill.active {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+}
+
+.fate-pill[data-fate="resting_moon"].active {
+  background: var(--fate-moon-bg);
+  border-color: var(--fate-moon);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--fate-moon-glow);
+}
+
+.fate-pill[data-fate="silent_mars"].active {
+  background: var(--fate-mars-bg);
+  border-color: var(--fate-mars);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--fate-mars-glow);
+}
+
+.fate-pill[data-fate="deep_space"].active {
+  background: var(--fate-deep-space-bg);
+  border-color: var(--fate-deep-space);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--fate-deep-space-glow);
+}
+
+.fate-pill[data-fate="sacrificial_plunge"].active {
+  background: var(--fate-plunge-bg);
+  border-color: var(--fate-plunge);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--fate-plunge-glow);
+}
+
+.fate-pill[data-fate="active_surface"].active {
+  background: var(--fate-active-bg);
+  border-color: var(--fate-active);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--fate-active-glow);
+}
+
+.fate-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.fate-dot.all { background: #38bdf8; box-shadow: 0 0 6px rgba(56, 189, 248, 0.6); }
+.fate-dot.moon { background: var(--fate-moon); box-shadow: 0 0 6px var(--fate-moon-glow); }
+.fate-dot.mars { background: var(--fate-mars); box-shadow: 0 0 6px var(--fate-mars-glow); }
+.fate-dot.deep_space { background: var(--fate-deep-space); box-shadow: 0 0 6px var(--fate-deep-space-glow); }
+.fate-dot.plunge { background: var(--fate-plunge); box-shadow: 0 0 6px var(--fate-plunge-glow); }
+.fate-dot.active { background: var(--fate-active); box-shadow: 0 0 6px var(--fate-active-glow); }
+
+/* --- MISSION CARDS GRID --- */
+.mission-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* --- GLASSMORPHISM MISSION CARD --- */
+.archive-mission-card {
+  position: relative;
+  background: var(--archive-card-bg);
+  border: 1px solid var(--archive-border);
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.archive-mission-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--archive-border-hover);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.15);
+}
+
+.archive-mission-card.fate-resting_moon:hover { border-color: rgba(140, 200, 255, 0.5); }
+.archive-mission-card.fate-silent_mars:hover { border-color: rgba(249, 115, 22, 0.5); }
+.archive-mission-card.fate-deep_space:hover { border-color: rgba(250, 204, 21, 0.5); }
+.archive-mission-card.fate-sacrificial_plunge:hover { border-color: rgba(139, 92, 246, 0.5); }
+.archive-mission-card.fate-active_surface:hover { border-color: rgba(16, 185, 129, 0.5); }
+.archive-mission-card.fate-active_orbit:hover { border-color: rgba(6, 182, 212, 0.5); }
+
+/* Hero Card Header with SVG Craft Silhouette */
+.card-hero-header {
+  position: relative;
+  height: 120px;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.7));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  overflow: hidden;
+}
+
+.card-hero-backdrop-glow {
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.fate-resting_moon .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-moon-glow) 0%, transparent 70%); }
+.fate-silent_mars .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-mars-glow) 0%, transparent 70%); }
+.fate-deep_space .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-deep-space-glow) 0%, transparent 70%); }
+.fate-sacrificial_plunge .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-plunge-glow) 0%, transparent 70%); }
+.fate-active_surface .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-active-glow) 0%, transparent 70%); }
+.fate-active_orbit .card-hero-backdrop-glow { background: radial-gradient(circle, var(--fate-orbit-glow) 0%, transparent 70%); }
+
+.card-hero-art {
+  width: 86px;
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+  transition: transform 0.3s ease;
+}
+
+.archive-mission-card:hover .card-hero-art {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.card-hero-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 2;
+}
+
+.card-dest-pill {
+  padding: 3px 8px;
+  background: rgba(6, 11, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-family: var(--font-orbitron);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+.card-agency-tag {
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  font-family: var(--font-orbitron);
+  font-size: 0.54rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+/* Card Main Body */
+.card-main-body {
+  padding: 16px 18px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.card-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-mission-title {
+  font-family: var(--font-orbitron);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.card-callsign-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: var(--font-inter);
+}
+
+/* Fate Indicator Badge Bar */
+.card-fate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-fate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-orbitron);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.card-fate-badge.resting_moon { color: var(--fate-moon); }
+.card-fate-badge.silent_mars { color: var(--fate-mars); }
+.card-fate-badge.deep_space { color: var(--fate-deep-space); }
+.card-fate-badge.sacrificial_plunge { color: var(--fate-plunge); }
+.card-fate-badge.active_surface { color: var(--fate-active); }
+.card-fate-badge.active_orbit { color: var(--fate-orbit); }
+
+.card-fate-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: pulseIndicator 2.2s infinite ease-in-out;
+}
+
+.card-fate-badge.resting_moon .card-fate-dot { background: var(--fate-moon); box-shadow: 0 0 8px var(--fate-moon-glow); }
+.card-fate-badge.silent_mars .card-fate-dot { background: var(--fate-mars); box-shadow: 0 0 8px var(--fate-mars-glow); }
+.card-fate-badge.deep_space .card-fate-dot { background: var(--fate-deep-space); box-shadow: 0 0 8px var(--fate-deep-space-glow); }
+.card-fate-badge.sacrificial_plunge .card-fate-dot { background: var(--fate-plunge); box-shadow: 0 0 8px var(--fate-plunge-glow); }
+.card-fate-badge.active_surface .card-fate-dot { background: var(--fate-active); box-shadow: 0 0 8px var(--fate-active-glow); }
+.card-fate-badge.active_orbit .card-fate-dot { background: var(--fate-orbit); box-shadow: 0 0 8px var(--fate-orbit-glow); }
+
+@keyframes pulseIndicator {
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.card-signal-pill {
+  font-size: 0.62rem;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-signal-pill.transmitting {
+  color: #34d399;
+}
+
+.signal-blip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.card-signal-pill.transmitting .signal-blip {
+  box-shadow: 0 0 6px #34d399;
+}
+
+/* Timeline Metadata Row */
+.card-timeline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  padding-bottom: 2px;
+}
+
+.card-timeline-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-timeline-item strong {
+  color: #e2e8f0;
+}
+
+/* Spec Chips Grid */
+.card-specs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.spec-chip {
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spec-chip .chip-icon {
+  font-size: 0.72rem;
+}
+
+/* Narrative Teaser Box */
+.card-narrative-teaser {
+  position: relative;
+  background: rgba(2, 6, 23, 0.55);
+  border-left: 2px solid #38bdf8;
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  margin-top: 2px;
+  transition: all 0.25s ease;
+}
+
+.archive-mission-card:hover .card-narrative-teaser {
+  background: rgba(2, 6, 23, 0.82);
+  border-left-color: #00f0ff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), -2px 0 8px rgba(56, 189, 248, 0.25);
+}
+
+.card-narrative-label {
+  font-family: var(--font-orbitron);
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s ease;
+}
+
+.archive-mission-card:hover .card-narrative-label {
+  color: #00f0ff;
+}
+
+.card-narrative-text {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-style: italic;
+  transition: color 0.2s ease;
+}
+
+.archive-mission-card:hover .card-narrative-text {
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  color: #e2e8f0;
+}
+
+/* Card Action Footer */
+.card-action-footer {
+  padding: 12px 18px 16px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.card-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: var(--font-orbitron);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.card-btn.primary {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+}
+
+.card-btn.primary:hover {
+  background: linear-gradient(135deg, #0369a1, #1d4ed8);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+.card-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+}
+
+.card-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.card-btn.tertiary {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+
+.card-btn.tertiary:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* --- EMPTY STATE CONTAINER --- */
+.archive-empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: rgba(11, 18, 38, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  margin: 30px 0;
+  backdrop-filter: blur(12px);
+}
+
+.archive-empty-state.hidden {
+  display: none;
+}
+
+.empty-state-icon {
+  font-size: 2.8rem;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.4));
+  animation: radarScan 3s infinite ease-in-out;
+}
+
+@keyframes radarScan {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+.empty-state-title {
+  font-family: var(--font-orbitron);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.empty-state-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  max-width: 480px;
+  margin: 0 auto 20px auto;
+  line-height: 1.5;
+}
+
+.archive-reset-btn {
+  padding: 10px 20px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid #38bdf8;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: var(--font-orbitron);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.archive-reset-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+  transform: translateY(-1px);
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+  .mission-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+  .archive-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .archive-search-box {
+    max-width: 100%;
+  }
+  .archive-dropdowns-row {
+    justify-content: space-between;
+  }
+}
