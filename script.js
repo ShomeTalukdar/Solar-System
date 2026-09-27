@@ -1160,6 +1160,9 @@ class SolarSystemApp {
     this.createAsteroidBelt();
     this.setupUI();
     this.setupEvents();
+    if (typeof TrajectorySimulator !== 'undefined') {
+      this.trajectorySimulator = new TrajectorySimulator(this);
+    }
     this.animate();
   }
 
@@ -1902,7 +1905,8 @@ class SolarSystemApp {
   }
 
   onPointerClick(e) {
-    if (e.target.closest('.minimal-header, .slide-panel, .minimal-dock, .floating-controls-bar, #audio-toggle, #left-nav, #radar-widget, #views-container, #mission-control-hud, .mission-control-btn, .hud-search-btn, .top-right-hud')) return;
+    if (e.target.closest('.minimal-header, .slide-panel, .minimal-dock, .floating-controls-bar, #audio-toggle, #left-nav, #radar-widget, #views-container, #mission-control-hud, .mission-control-btn, .hud-search-btn, .top-right-hud, #flight-telemetry-hud, #simulation-exit-bar')) return;
+    if (this.trajectorySimulator && this.trajectorySimulator.isActive) return;
     if (window.navigationShell && window.navigationShell.currentView !== 'explore') return;
 
     // Reject camera rotation drag/pinch gestures (threshold 8px)
@@ -1941,6 +1945,12 @@ class SolarSystemApp {
     this.timeSpeed = val;
     if (this.speedSlider) this.speedSlider.value = val;
     if (this.speedValue) this.speedValue.textContent = `${val.toFixed(1)}x`;
+  }
+
+  launchTrajectorySimulation(missionId) {
+    if (this.trajectorySimulator) {
+      this.trajectorySimulator.launchMission(missionId);
+    }
   }
 
   selectPlanetByName(name) {
@@ -2142,6 +2152,10 @@ class SolarSystemApp {
 
     if (window.TWEEN) {
       TWEEN.update();
+    }
+
+    if (this.trajectorySimulator) {
+      this.trajectorySimulator.update(delta);
     }
 
     this.updateMeteors(delta);

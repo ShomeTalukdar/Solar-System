@@ -105,6 +105,7 @@ class NavigationShell {
     this.radarPrevBtn = document.getElementById('radar-prev-btn');
     this.radarNextBtn = document.getElementById('radar-next-btn');
     this.radarActionBtn = document.getElementById('radar-action-btn');
+    this.radarTrack3dBtn = document.getElementById('radar-track-3d-btn');
 
     // Archive Search
     this.archiveSearchInput = document.getElementById('archive-search-input');
@@ -262,6 +263,18 @@ class NavigationShell {
         this.switchView('archive', { search: mission.name });
       });
     }
+
+    if (this.radarTrack3dBtn) {
+      this.radarTrack3dBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.playSound('confirm');
+        const mission = this.radarMissions[this.currentRadarIndex];
+        this.switchView('explore');
+        if (window.solarApp && typeof window.solarApp.launchTrajectorySimulation === 'function') {
+          window.solarApp.launchTrajectorySimulation(mission.id);
+        }
+      });
+    }
   }
 
   updateRadarDisplay() {
@@ -319,16 +332,16 @@ class NavigationShell {
       });
     });
 
-    // "Track in 3D" buttons on mission cards
+    // "Track in 3D" buttons on mission cards & "Launch Simulation" buttons in Trails
     document.addEventListener('click', (e) => {
-      const trackBtn = e.target.closest('.card-track-3d');
+      const trackBtn = e.target.closest('.card-track-3d, .btn-launch-sim');
       if (trackBtn) {
         e.stopPropagation();
         this.playSound('confirm');
-        const planet = trackBtn.dataset.targetPlanet || 'Earth';
+        const missionId = trackBtn.dataset.missionId || 'apollo-11';
         this.switchView('explore');
-        if (window.solarApp && typeof window.solarApp.selectPlanetByName === 'function') {
-          window.solarApp.selectPlanetByName(planet);
+        if (window.solarApp && typeof window.solarApp.launchTrajectorySimulation === 'function') {
+          window.solarApp.launchTrajectorySimulation(missionId);
         }
       }
     });
