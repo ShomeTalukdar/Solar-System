@@ -365,169 +365,275 @@ class TrajectorySimulator {
     this.createProceduralRocket();
   }
 
-  // --- 1. PROCEDURAL MINIATURE CEL-SHADED CHALK ROCKET (SCALE = 0.55) ---
+  // --- 1. PROCEDURAL MINIATURE CEL-SHADED CHALK ROCKET (CUTE CHIBI TOY STYLE) ---
   createProceduralRocket() {
     this.rocketGroup = new THREE.Group();
     this.rocketGroup.name = 'TrajectoryRocketGroup';
 
-    // Cel-shaded ("shell-shaded"), matte chalk-colored materials with toon gradient
-    const toonGrad = this.app.toonGradient || null;
+    // 1. High-Contrast 3-Step Toon Ramp for Ultra-Crisp Shell Shading
+    const toonCanvas = document.createElement('canvas');
+    toonCanvas.width = 3;
+    toonCanvas.height = 1;
+    const toonCtx = toonCanvas.getContext('2d');
+    toonCtx.fillStyle = '#0f172a'; // Deep cosmic shadow
+    toonCtx.fillRect(0, 0, 1, 1);
+    toonCtx.fillStyle = '#6366f1'; // Vivid midtone
+    toonCtx.fillRect(1, 0, 1, 1);
+    toonCtx.fillStyle = '#ffffff'; // Pure chalk highlight
+    toonCtx.fillRect(2, 0, 1, 1);
+    const sharpToonGrad = new THREE.CanvasTexture(toonCanvas);
+    sharpToonGrad.minFilter = THREE.NearestFilter;
+    sharpToonGrad.magFilter = THREE.NearestFilter;
 
-    // 1. Chalk White Fuselage
+    // Materials
     const chalkWhiteMat = new THREE.MeshToonMaterial({
       color: 0xffffff,
-      roughness: 0.9,
-      gradientMap: toonGrad
+      roughness: 0.6,
+      gradientMap: sharpToonGrad
     });
 
-    // 2. Chalk Crimson Accents (Nose & Fins)
     const chalkCrimsonMat = new THREE.MeshToonMaterial({
       color: 0xf43f5e,
-      roughness: 0.9,
-      gradientMap: toonGrad
+      roughness: 0.6,
+      gradientMap: sharpToonGrad
     });
 
-    // 3. Chalk Cyan Porthole
     const chalkCyanMat = new THREE.MeshToonMaterial({
       color: 0x38bdf8,
       emissive: 0x0284c7,
-      emissiveIntensity: 0.6,
-      gradientMap: toonGrad
+      emissiveIntensity: 0.9,
+      gradientMap: sharpToonGrad
     });
 
-    // 4. Charcoal Engine Base
     const charcoalMat = new THREE.MeshToonMaterial({
-      color: 0x1e293b,
-      roughness: 0.8,
-      gradientMap: toonGrad
+      color: 0x111827,
+      roughness: 0.7,
+      gradientMap: sharpToonGrad
     });
 
-    // High-Contrast Dark Ink Outline Material
+    const lemonMat = new THREE.MeshToonMaterial({
+      color: 0xfde047,
+      roughness: 0.5,
+      gradientMap: sharpToonGrad
+    });
+
+    // Pitch-black inverted hull shell outline for maximum cartoon pop
     const inkOutlineMat = new THREE.MeshBasicMaterial({
-      color: 0x050816,
+      color: 0x000000,
       side: THREE.BackSide
     });
 
-    // --- A. Fuselage: Bulbous capsule cylinder with slight taper ---
-    const fuselageGeo = new THREE.CylinderGeometry(0.36, 0.44, 1.7, 20);
-    const fuselage = new THREE.Mesh(fuselageGeo, chalkWhiteMat);
-    fuselage.castShadow = true;
-    this.rocketGroup.add(fuselage);
+    // --- A. Fuselage: Chubby Rounded Chibi Capsule ---
+    const bodyGroup = new THREE.Group();
 
-    // Inverted hull ink outline for fuselage
-    const fuseOutlineGeo = new THREE.CylinderGeometry(0.36 * 1.08, 0.44 * 1.08, 1.7 * 1.02, 20);
-    const fuseOutline = new THREE.Mesh(fuseOutlineGeo, inkOutlineMat);
-    this.rocketGroup.add(fuseOutline);
+    // Central cylinder
+    const cylGeo = new THREE.CylinderGeometry(0.38, 0.44, 0.95, 24);
+    const cylMesh = new THREE.Mesh(cylGeo, chalkWhiteMat);
+    bodyGroup.add(cylMesh);
 
-    // Chalk crimson mid-stripe band
-    const stripeGeo = new THREE.CylinderGeometry(0.405, 0.405, 0.28, 20);
+    // Cyl outline
+    const cylOutGeo = new THREE.CylinderGeometry(0.38 * 1.16, 0.44 * 1.16, 0.95 * 1.04, 24);
+    bodyGroup.add(new THREE.Mesh(cylOutGeo, inkOutlineMat));
+
+    // Upper shoulder dome
+    const topDomeGeo = new THREE.SphereGeometry(0.38, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const topDome = new THREE.Mesh(topDomeGeo, chalkWhiteMat);
+    topDome.position.y = 0.475;
+    bodyGroup.add(topDome);
+
+    const topDomeOutGeo = new THREE.SphereGeometry(0.38 * 1.16, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const topDomeOut = new THREE.Mesh(topDomeOutGeo, inkOutlineMat);
+    topDomeOut.position.y = 0.475;
+    bodyGroup.add(topDomeOut);
+
+    // Lower skirt dome
+    const btmDomeGeo = new THREE.SphereGeometry(0.44, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+    const btmDome = new THREE.Mesh(btmDomeGeo, chalkWhiteMat);
+    btmDome.position.y = -0.475;
+    bodyGroup.add(btmDome);
+
+    const btmDomeOutGeo = new THREE.SphereGeometry(0.44 * 1.16, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+    const btmDomeOut = new THREE.Mesh(btmDomeOutGeo, inkOutlineMat);
+    btmDomeOut.position.y = -0.475;
+    bodyGroup.add(btmDomeOut);
+
+    // Vibrant Crimson Waist Band
+    const stripeGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.22, 24);
     const stripe = new THREE.Mesh(stripeGeo, chalkCrimsonMat);
-    stripe.position.y = 0.25;
-    this.rocketGroup.add(stripe);
+    stripe.position.y = 0.0;
+    bodyGroup.add(stripe);
 
-    // --- B. Conical Chalk-Red Nosecone ---
-    const noseGeo = new THREE.ConeGeometry(0.36, 0.85, 20);
+    // Two cute cartoon gold rivet dots on the waist band
+    const rivetGeo = new THREE.SphereGeometry(0.045, 10, 10);
+    const rivetL = new THREE.Mesh(rivetGeo, lemonMat);
+    rivetL.position.set(-0.20, 0.0, 0.38);
+    bodyGroup.add(rivetL);
+
+    const rivetR = new THREE.Mesh(rivetGeo, lemonMat);
+    rivetR.position.set(0.20, 0.0, 0.38);
+    bodyGroup.add(rivetR);
+
+    this.rocketGroup.add(bodyGroup);
+
+    // --- B. Conical Chubby Nosecone with Cartoon Bobble Antenna ---
+    const noseGeo = new THREE.ConeGeometry(0.38, 0.62, 24);
     const nose = new THREE.Mesh(noseGeo, chalkCrimsonMat);
-    nose.position.y = 1.275;
+    nose.position.y = 0.95;
     this.rocketGroup.add(nose);
 
-    const noseOutlineGeo = new THREE.ConeGeometry(0.36 * 1.08, 0.85 * 1.05, 20);
-    const noseOutline = new THREE.Mesh(noseOutlineGeo, inkOutlineMat);
-    noseOutline.position.y = 1.275;
-    this.rocketGroup.add(noseOutline);
+    const noseOutGeo = new THREE.ConeGeometry(0.38 * 1.16, 0.62 * 1.10, 24);
+    const noseOut = new THREE.Mesh(noseOutGeo, inkOutlineMat);
+    noseOut.position.y = 0.95;
+    this.rocketGroup.add(noseOut);
 
-    // Tiny radio antenna needle at tip
-    const needleGeo = new THREE.CylinderGeometry(0.02, 0.035, 0.45, 8);
-    const needle = new THREE.Mesh(needleGeo, charcoalMat);
-    needle.position.y = 1.88;
-    this.rocketGroup.add(needle);
+    // Cute retro bobble antenna on top
+    const stemGeo = new THREE.CylinderGeometry(0.025, 0.035, 0.28, 10);
+    const stem = new THREE.Mesh(stemGeo, charcoalMat);
+    stem.position.y = 1.34;
+    this.rocketGroup.add(stem);
 
-    // --- C. Round Chalk-Cyan Observation Porthole ---
+    // Bright lemon bobble sphere with ink outline
+    const bobbleGeo = new THREE.SphereGeometry(0.095, 16, 16);
+    const bobble = new THREE.Mesh(bobbleGeo, lemonMat);
+    bobble.position.y = 1.50;
+    this.rocketGroup.add(bobble);
+
+    const bobbleOutGeo = new THREE.SphereGeometry(0.095 * 1.25, 16, 16);
+    const bobbleOut = new THREE.Mesh(bobbleOutGeo, inkOutlineMat);
+    bobbleOut.position.y = 1.50;
+    this.rocketGroup.add(bobbleOut);
+
+    // --- C. Big Chubby Bubble Porthole with Cartoon Glass Glints ---
     const windowGroup = new THREE.Group();
-    const portHoleGeo = new THREE.CircleGeometry(0.13, 18);
-    const portHole = new THREE.Mesh(portHoleGeo, chalkCyanMat);
-    portHole.position.set(0, 0.32, 0.405);
+    windowGroup.position.set(0, 0.28, 0.39);
 
-    const portHoleRimGeo = new THREE.RingGeometry(0.125, 0.17, 18);
-    const portHoleRim = new THREE.Mesh(portHoleRimGeo, charcoalMat);
-    portHoleRim.position.set(0, 0.32, 0.406);
-    windowGroup.add(portHole);
-    windowGroup.add(portHoleRim);
+    // Dark charcoal bezel
+    const rimGeo = new THREE.TorusGeometry(0.18, 0.035, 12, 24);
+    const rim = new THREE.Mesh(rimGeo, charcoalMat);
+    windowGroup.add(rim);
+
+    // Convex cyan bubble glass
+    const glassGeo = new THREE.SphereGeometry(0.17, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2);
+    const glass = new THREE.Mesh(glassGeo, chalkCyanMat);
+    glass.rotation.x = Math.PI / 2;
+    windowGroup.add(glass);
+
+    // Cartoon glass glints in pure white
+    const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+    // Primary oval highlight (top-left)
+    const glint1Geo = new THREE.CircleGeometry(0.045, 14);
+    const glint1 = new THREE.Mesh(glint1Geo, glintMat);
+    glint1.position.set(-0.05, 0.06, 0.09);
+    glint1.scale.set(1.4, 0.8, 1);
+    glint1.rotation.z = Math.PI / 4;
+    windowGroup.add(glint1);
+
+    // Secondary sparkle dot (bottom-right)
+    const glint2Geo = new THREE.CircleGeometry(0.02, 10);
+    const glint2 = new THREE.Mesh(glint2Geo, glintMat);
+    glint2.position.set(0.06, -0.05, 0.09);
+    windowGroup.add(glint2);
+
     this.rocketGroup.add(windowGroup);
 
-    // --- D. 3 Angled Cartoon Fins with Distinct Dark Bevel Borders ---
+    // --- D. 3 Chunky Swept Cartoon Fins with Thick Ink Outlines ---
     const finShape = new THREE.Shape();
-    finShape.moveTo(0, 0);
-    finShape.lineTo(0.55, -0.32);
-    finShape.lineTo(0.48, -0.72);
-    finShape.lineTo(0, -0.55);
+    finShape.moveTo(0, 0.08);
+    finShape.quadraticCurveTo(0.48, 0.05, 0.58, -0.18);
+    finShape.quadraticCurveTo(0.52, -0.52, 0.16, -0.56);
+    finShape.lineTo(0, -0.38);
     finShape.closePath();
 
-    const extrudeSettings = { depth: 0.06, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.02, bevelThickness: 0.02 };
+    const extrudeSettings = {
+      depth: 0.065,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      steps: 1,
+      bevelSize: 0.025,
+      bevelThickness: 0.025
+    };
     const finGeo = new THREE.ExtrudeGeometry(finShape, extrudeSettings);
 
     for (let i = 0; i < 3; i++) {
+      const angle = (i * Math.PI * 2) / 3;
+
       const fin = new THREE.Mesh(finGeo, chalkCrimsonMat);
-      fin.rotation.y = (i * Math.PI * 2) / 3;
-      fin.position.y = -0.42;
+      fin.rotation.y = angle;
+      fin.position.y = -0.35;
       this.rocketGroup.add(fin);
 
-      // Dark outline for fin
+      // Thick black ink outline for fin
       const finOut = new THREE.Mesh(finGeo, inkOutlineMat);
-      finOut.rotation.y = (i * Math.PI * 2) / 3;
-      finOut.position.y = -0.42;
-      finOut.scale.set(1.08, 1.08, 1.08);
+      finOut.rotation.y = angle;
+      finOut.position.y = -0.35;
+      finOut.scale.set(1.16, 1.16, 1.16);
       this.rocketGroup.add(finOut);
     }
 
-    // --- E. Retro-Rocket Engine Nozzle ---
-    const nozzleGeo = new THREE.CylinderGeometry(0.15, 0.35, 0.45, 16, 1, true);
+    // --- E. Retro Flared Bell Engine Nozzle ---
+    const nozzleGeo = new THREE.CylinderGeometry(0.16, 0.36, 0.35, 20, 1, true);
     const nozzle = new THREE.Mesh(nozzleGeo, charcoalMat);
-    nozzle.position.y = -1.05;
+    nozzle.position.y = -0.72;
     this.rocketGroup.add(nozzle);
 
-    const nozzleOutGeo = new THREE.CylinderGeometry(0.15 * 1.1, 0.35 * 1.1, 0.45 * 1.02, 16, 1, true);
+    const nozzleLipGeo = new THREE.TorusGeometry(0.36, 0.03, 10, 20);
+    const nozzleLip = new THREE.Mesh(nozzleLipGeo, charcoalMat);
+    nozzleLip.position.y = -0.895;
+    nozzleLip.rotation.x = Math.PI / 2;
+    this.rocketGroup.add(nozzleLip);
+
+    const nozzleOutGeo = new THREE.CylinderGeometry(0.16 * 1.16, 0.36 * 1.16, 0.35 * 1.05, 20, 1, true);
     const nozzleOut = new THREE.Mesh(nozzleOutGeo, inkOutlineMat);
-    nozzleOut.position.y = -1.05;
+    nozzleOut.position.y = -0.72;
     this.rocketGroup.add(nozzleOut);
 
-    // --- F. Chalk Flame Puffs (Layered Cartoon Teardrops/Spheres) ---
+    // --- F. Layered Cartoon Flame Puffs (Squash-and-Stretch Animated) ---
     // Outer flame puff (Chalk Tangerine #FB923C)
-    const flameGeo1 = new THREE.SphereGeometry(0.28, 12, 12);
+    const flameGeo1 = new THREE.SphereGeometry(0.24, 14, 14);
     const flameMat1 = new THREE.MeshBasicMaterial({
       color: 0xfb923c,
       transparent: true,
       opacity: 0.95
     });
     this.flamePuff1 = new THREE.Mesh(flameGeo1, flameMat1);
-    this.flamePuff1.position.y = -1.35;
-    this.flamePuff1.scale.set(1.0, 1.4, 1.0);
+    this.flamePuff1.position.y = -1.08;
     this.rocketGroup.add(this.flamePuff1);
 
-    // Inner bright core (Chalk Lemon #FDE047)
-    const flameGeo2 = new THREE.SphereGeometry(0.18, 10, 10);
+    // Middle bright flame (Chalk Lemon #FDE047)
+    const flameGeo2 = new THREE.SphereGeometry(0.16, 12, 12);
     const flameMat2 = new THREE.MeshBasicMaterial({
       color: 0xfde047,
       transparent: true,
       opacity: 0.98
     });
     this.flamePuff2 = new THREE.Mesh(flameGeo2, flameMat2);
-    this.flamePuff2.position.y = -1.28;
-    this.flamePuff2.scale.set(0.9, 1.2, 0.9);
+    this.flamePuff2.position.y = -1.02;
     this.rocketGroup.add(this.flamePuff2);
 
-    // Lower trailing spark pop
-    const flameGeo3 = new THREE.SphereGeometry(0.12, 8, 8);
-    this.flamePuff3 = new THREE.Mesh(flameGeo3, flameMat2.clone());
-    this.flamePuff3.position.y = -1.72;
+    // Inner hot white core (#ffffff)
+    const flameGeo3 = new THREE.SphereGeometry(0.09, 10, 10);
+    const flameMat3 = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.99
+    });
+    this.flamePuff3 = new THREE.Mesh(flameGeo3, flameMat3);
+    this.flamePuff3.position.y = -0.98;
     this.rocketGroup.add(this.flamePuff3);
 
-    // MINIATURE PROPORTIONS: scale = 0.55 (Total height ~ 1.2 units)
+    // Trailing spark pop
+    const sparkGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    this.flamePuff4 = new THREE.Mesh(sparkGeo, flameMat2.clone());
+    this.flamePuff4.position.y = -1.45;
+    this.rocketGroup.add(this.flamePuff4);
+
+    // MINIATURE PROPORTIONS: scale = 0.55 (Total height ~ 1.2 units, width ~ 0.5 units)
     this.rocketGroup.scale.setScalar(0.55);
     this.rocketGroup.visible = false;
     this.scene.add(this.rocketGroup);
 
-    // 7. Trailing Chalk Dust Particle System
+    // 7. Trailing Chalk Dust Particle System (Cute Delicate Flecks)
     this.createSmokeParticleSystem();
 
     // 8. Destination Chalk Landing Beacon
@@ -537,8 +643,9 @@ class TrajectorySimulator {
   createSmokeParticleSystem() {
     this.particlesGroup = new THREE.Group();
     this.particles = [];
-    const count = 45;
-    const geo = new THREE.SphereGeometry(0.12, 8, 8);
+    const count = 40;
+    // Tiny delicate chalk dust particles, much smaller than rocket
+    const geo = new THREE.SphereGeometry(0.035, 6, 6);
     const chalkColors = [0xfde047, 0xfb923c, 0xfef08a, 0xffffff];
 
     for (let i = 0; i < count; i++) {
@@ -546,13 +653,13 @@ class TrajectorySimulator {
       const mat = new THREE.MeshBasicMaterial({
         color: col,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.85
       });
       const p = new THREE.Mesh(geo, mat);
       p.visible = false;
       p.userData = {
         life: 0,
-        maxLife: 0.9,
+        maxLife: 0.65,
         vel: new THREE.Vector3()
       };
       this.particlesGroup.add(p);
@@ -566,8 +673,8 @@ class TrajectorySimulator {
     this.landingBeacon = new THREE.Group();
     this.landingBeacon.name = 'TrajectoryLandingBeacon';
 
-    // 1. Concentric Chalk Target Rings on Surface
-    const ringGeo1 = new THREE.RingGeometry(0.7, 0.85, 32);
+    // 1. Concentric Chalk Target Rings on Surface (Compact Proportions)
+    const ringGeo1 = new THREE.RingGeometry(0.50, 0.62, 32);
     const ringMat1 = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       side: THREE.DoubleSide,
@@ -578,7 +685,7 @@ class TrajectorySimulator {
     ring1.rotation.x = Math.PI / 2;
     this.landingBeacon.add(ring1);
 
-    const ringGeo2 = new THREE.RingGeometry(1.15, 1.25, 32);
+    const ringGeo2 = new THREE.RingGeometry(0.80, 0.90, 32);
     const ringMat2 = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       side: THREE.DoubleSide,
@@ -593,57 +700,57 @@ class TrajectorySimulator {
     this.chalkLander = new THREE.Group();
 
     // Golden foil octagonal descent stage
-    const baseGeo = new THREE.CylinderGeometry(0.28, 0.38, 0.2, 8);
+    const baseGeo = new THREE.CylinderGeometry(0.22, 0.30, 0.16, 8);
     const baseMat = new THREE.MeshToonMaterial({
       color: 0xf59e0b,
       gradientMap: this.app.toonGradient
     });
     const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-    baseMesh.position.y = 0.1;
+    baseMesh.position.y = 0.08;
     this.chalkLander.add(baseMesh);
 
     // Outline
-    const baseOutGeo = new THREE.CylinderGeometry(0.28 * 1.1, 0.38 * 1.1, 0.2 * 1.1, 8);
-    const outMat = new THREE.MeshBasicMaterial({ color: 0x050816, side: THREE.BackSide });
+    const baseOutGeo = new THREE.CylinderGeometry(0.22 * 1.15, 0.30 * 1.15, 0.16 * 1.1, 8);
+    const outMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide });
     baseMesh.add(new THREE.Mesh(baseOutGeo, outMat));
 
     // White capsule top
-    const capGeo = new THREE.DodecahedronGeometry(0.16);
+    const capGeo = new THREE.DodecahedronGeometry(0.13);
     const capMat = new THREE.MeshToonMaterial({
       color: 0xffffff,
       gradientMap: this.app.toonGradient
     });
     const capMesh = new THREE.Mesh(capGeo, capMat);
-    capMesh.position.y = 0.28;
+    capMesh.position.y = 0.22;
     this.chalkLander.add(capMesh);
 
     // 4 Landing Struts
     for (let i = 0; i < 4; i++) {
-      const legGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.35, 6);
-      const legMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const legGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.28, 6);
+      const legMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
       const leg = new THREE.Mesh(legGeo, legMat);
       const angle = (i * Math.PI) / 2;
-      leg.position.set(Math.cos(angle) * 0.28, 0.07, Math.sin(angle) * 0.28);
+      leg.position.set(Math.cos(angle) * 0.22, 0.06, Math.sin(angle) * 0.22);
       leg.rotation.z = Math.PI / 6;
       this.chalkLander.add(leg);
     }
 
     // Miniature Flagpole & Chalk Crimson Flag
-    const poleGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.8, 6);
+    const poleGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.65, 6);
     const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const pole = new THREE.Mesh(poleGeo, poleMat);
-    pole.position.set(0.22, 0.4, 0);
+    pole.position.set(0.18, 0.32, 0);
     this.chalkLander.add(pole);
 
     const flagShape = new THREE.Shape();
     flagShape.moveTo(0, 0);
-    flagShape.lineTo(0.28, 0.09);
-    flagShape.lineTo(0, 0.18);
+    flagShape.lineTo(0.22, 0.07);
+    flagShape.lineTo(0, 0.14);
     flagShape.closePath();
     const flagGeo = new THREE.ShapeGeometry(flagShape);
     const flagMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, side: THREE.DoubleSide });
     const flag = new THREE.Mesh(flagGeo, flagMat);
-    flag.position.set(0.22, 0.58, 0);
+    flag.position.set(0.18, 0.46, 0);
     this.chalkLander.add(flag);
 
     this.chalkLander.scale.set(0.001, 0.001, 0.001);
@@ -784,32 +891,28 @@ class TrajectorySimulator {
     this.trajectoryCurve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.5);
     this.trajectoryPoints = points;
 
-    // --- 1. Primary Line: Bold, Unlit Chalk-Dashed Ribbon ---
+    // --- 1. Primary Line: Fine, High-Contrast Chalk-Dashed Ribbon ---
     const curvePoints = this.trajectoryCurve.getPoints(120);
     const lineGeo = new THREE.BufferGeometry().setFromPoints(curvePoints);
     const lineMat = new THREE.LineDashedMaterial({
       color: mission.color,
-      dashSize: 1.8,
-      gapSize: 0.8,
+      dashSize: 1.0,
+      gapSize: 0.5,
       scale: 1,
-      linewidth: 3
+      linewidth: 2
     });
     this.chalkDashedLine = new THREE.Line(lineGeo, lineMat);
     this.chalkDashedLine.computeLineDistances();
     this.chalkDashedLine.name = 'ChalkDashedLine';
     this.scene.add(this.chalkDashedLine);
 
-    // --- 2. Overlay Glowing Chalk-Dust Tube (translucent soft glow) ---
-    const tubeGeo = new THREE.TubeGeometry(this.trajectoryCurve, 120, 0.35, 8, false);
-    const tubeMat = new THREE.MeshStandardMaterial({
+    // --- 2. Overlay Soft Chalk Glow Line (Zero Perspective Ballooning) ---
+    const glowLineMat = new THREE.LineBasicMaterial({
       color: mission.color,
-      emissive: mission.color,
-      emissiveIntensity: 0.8,
-      roughness: 0.85,
       transparent: true,
-      opacity: 0.35
+      opacity: 0.45
     });
-    this.trajectoryTube = new THREE.Mesh(tubeGeo, tubeMat);
+    this.trajectoryTube = new THREE.Line(lineGeo, glowLineMat);
     this.trajectoryTube.name = 'TrajectoryTube';
     this.scene.add(this.trajectoryTube);
 
@@ -836,8 +939,8 @@ class TrajectorySimulator {
       wpGroup.position.copy(pos);
       wpGroup.lookAt(pos.clone().add(tangent));
 
-      // Concentric dashed rings
-      const r1Geo = new THREE.RingGeometry(1.6, 1.75, 32);
+      // Delicate concentric dashed rings
+      const r1Geo = new THREE.RingGeometry(0.60, 0.70, 32);
       const r1Mat = new THREE.MeshBasicMaterial({
         color: mission.color,
         side: THREE.DoubleSide,
@@ -847,7 +950,7 @@ class TrajectorySimulator {
       const r1 = new THREE.Mesh(r1Geo, r1Mat);
       wpGroup.add(r1);
 
-      const r2Geo = new THREE.RingGeometry(2.2, 2.32, 32);
+      const r2Geo = new THREE.RingGeometry(0.88, 0.96, 32);
       const r2Mat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
@@ -858,20 +961,20 @@ class TrajectorySimulator {
       wpGroup.add(r2);
 
       // Chalk Delta-V direction arrow cone pointing along flight tangent
-      const arrowGeo = new THREE.ConeGeometry(0.35, 1.1, 10);
+      const arrowGeo = new THREE.ConeGeometry(0.16, 0.48, 8);
       arrowGeo.rotateX(Math.PI / 2);
       const arrowMat = new THREE.MeshBasicMaterial({
         color: mission.color
       });
       const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-      arrow.position.set(0, 0, 0.6);
+      arrow.position.set(0, 0, 0.35);
       wpGroup.add(arrow);
 
       this.waypointGroup.add(wpGroup);
 
-      // Floating billboard canvas sprite label
+      // Floating billboard canvas sprite label (compact proportions)
       const sprite = this.createLabelSprite(wp.label, mission.colorHex);
-      sprite.position.copy(pos).add(new THREE.Vector3(0, 2.6, 0));
+      sprite.position.copy(pos).add(new THREE.Vector3(0, 1.25, 0));
       this.waypointGroup.add(sprite);
     });
 
@@ -898,7 +1001,7 @@ class TrajectorySimulator {
     ctx.stroke();
 
     // Text
-    ctx.font = 'bold 30px "Orbitron", sans-serif';
+    ctx.font = 'bold 28px "Orbitron", sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -908,45 +1011,15 @@ class TrajectorySimulator {
     texture.minFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(12, 3, 1);
+    sprite.scale.set(5.5, 1.38, 1);
     return sprite;
   }
 
   updateActiveTrail() {
-    if (!this.trajectoryCurve || this.progress <= 0.015) {
-      if (this.activeTrailMesh) this.activeTrailMesh.visible = false;
-      return;
-    }
-
-    // Dynamic glowing trail drawn from t=0 to current progress
-    const sampleCount = Math.max(8, Math.round(this.progress * 100));
-    const trailPoints = [];
-    for (let i = 0; i <= sampleCount; i++) {
-      const u = (i / sampleCount) * this.progress;
-      trailPoints.push(this.trajectoryCurve.getPointAt(u));
-    }
-
-    if (trailPoints.length >= 2) {
-      const trailCurve = new THREE.CatmullRomCurve3(trailPoints, false, 'centripetal', 0.5);
-      const geo = new THREE.TubeGeometry(trailCurve, sampleCount * 2, 0.5, 8, false);
-
-      if (!this.activeTrailMesh) {
-        const mat = new THREE.MeshStandardMaterial({
-          color: (this.currentMission && this.currentMission.color) ? this.currentMission.color : 0x38bdf8,
-          emissive: (this.currentMission && this.currentMission.color) ? this.currentMission.color : 0x38bdf8,
-          emissiveIntensity: 1.8,
-          roughness: 0.2,
-          transparent: true,
-          opacity: 0.85
-        });
-        this.activeTrailMesh = new THREE.Mesh(geo, mat);
-        this.activeTrailMesh.name = 'ActiveTrajectoryTrail';
-        this.scene.add(this.activeTrailMesh);
-      } else {
-        this.activeTrailMesh.geometry.dispose();
-        this.activeTrailMesh.geometry = geo;
-        this.activeTrailMesh.visible = true;
-      }
+    if (this.activeTrailMesh) {
+      this.scene.remove(this.activeTrailMesh);
+      if (this.activeTrailMesh.geometry) this.activeTrailMesh.geometry.dispose();
+      this.activeTrailMesh = null;
     }
   }
 
@@ -1270,20 +1343,33 @@ class TrajectorySimulator {
     // Rotate so nosecone (+Y) points along the forward flight tangent
     this.rocketGroup.rotateX(Math.PI / 2);
 
-    // Dynamic Chalk Flame Puffs Animation (pulsing cartoon teardrops)
+    // Dynamic Chalk Flame Puffs Animation (Squash-and-Stretch Cartoon Fire)
     const isEngineFiring = this.progress < 0.95;
     if (this.flamePuff1 && this.flamePuff2 && this.flamePuff3) {
       this.flamePuff1.visible = isEngineFiring;
       this.flamePuff2.visible = isEngineFiring;
       this.flamePuff3.visible = isEngineFiring;
+      if (this.flamePuff4) this.flamePuff4.visible = isEngineFiring;
 
       if (isEngineFiring) {
-        const pulse = 1.0 + Math.sin(Date.now() * 0.035) * 0.35;
-        this.flamePuff1.scale.set(pulse, pulse * (1.1 + Math.random() * 0.25), pulse);
-        this.flamePuff2.scale.set(pulse * 0.85, pulse * 0.95, pulse * 0.85);
-        this.flamePuff3.position.y = -1.65 - Math.sin(Date.now() * 0.04) * 0.15;
+        const t = Date.now() * 0.024;
+        const pop1 = 1.0 + Math.sin(t) * 0.24;
+        const pop2 = 1.0 + Math.cos(t * 1.3) * 0.22;
+        this.flamePuff1.scale.set(pop1 * 0.9, (2.1 - pop1) * 1.25, pop1 * 0.9);
+        this.flamePuff2.scale.set((2.0 - pop2) * 0.85, pop2 * 1.1, (2.0 - pop2) * 0.85);
+        this.flamePuff3.scale.set(pop1 * 0.75, pop2 * 0.85, pop1 * 0.75);
+        if (this.flamePuff4) {
+          this.flamePuff4.position.y = -1.35 - Math.sin(t * 1.2) * 0.15;
+          this.flamePuff4.scale.setScalar(0.7 + Math.cos(t * 1.5) * 0.3);
+        }
       }
     }
+
+    // Playful toy rocket micro-bank/wobble for cute cartoony flight feel
+    const wobbleZ = Math.sin(Date.now() * 0.005) * 0.05;
+    const wobbleY = Math.cos(Date.now() * 0.004) * 0.03;
+    this.rocketGroup.rotateZ(wobbleZ);
+    this.rocketGroup.rotateY(wobbleY);
 
     // Destination Chalk Landing Beacon & Pop-up Lander
     if (this.landingBeacon) {
@@ -1333,7 +1419,7 @@ class TrajectorySimulator {
       this.emitChalkDustPuffs(delta);
     }
 
-    // Update chalk dust particles
+    // Update delicate chalk dust particles
     if (this.particles) {
       this.particles.forEach(p => {
         if (!p.visible) return;
@@ -1343,8 +1429,8 @@ class TrajectorySimulator {
         } else {
           p.position.addScaledVector(p.userData.vel, delta);
           const lifeFraction = p.userData.life / p.userData.maxLife;
-          p.material.opacity = (1.0 - lifeFraction) * 0.8;
-          p.scale.setScalar(1.0 + lifeFraction * 2.2);
+          p.material.opacity = (1.0 - lifeFraction) * 0.85;
+          p.scale.setScalar(1.0 + lifeFraction * 0.9);
         }
       });
     }
@@ -1361,16 +1447,16 @@ class TrajectorySimulator {
       if (p && !p.visible) {
         p.visible = true;
         p.position.copy(pos).add(new THREE.Vector3(
-          (Math.random() - 0.5) * 0.4,
-          (Math.random() - 0.5) * 0.4,
-          (Math.random() - 0.5) * 0.4
+          (Math.random() - 0.5) * 0.15,
+          (Math.random() - 0.5) * 0.15,
+          (Math.random() - 0.5) * 0.15
         ));
         p.userData.life = 0;
-        p.userData.maxLife = 0.85;
+        p.userData.maxLife = 0.65;
         p.userData.vel.set(
-          (Math.random() - 0.5) * 0.8,
-          (Math.random() - 0.5) * 0.8,
-          (Math.random() - 0.5) * 0.8
+          (Math.random() - 0.5) * 0.35,
+          (Math.random() - 0.5) * 0.35,
+          (Math.random() - 0.5) * 0.35
         );
       }
     }
@@ -1406,9 +1492,17 @@ class TrajectorySimulator {
         }
 
       } else {
-        // Stage B (Interplanetary Chase Cam): Tight chase view locked behind miniature rocket
+        // Stage B (Interplanetary Chase Cam): 3/4 tight chase view showcasing cute rocket details
         const tangent = this.trajectoryCurve.getTangentAt(Math.min(this.progress + 0.005, 1.0));
-        const camOffset = tangent.clone().negate().multiplyScalar(3.8).add(new THREE.Vector3(0, 1.4, 0));
+        const up = new THREE.Vector3(0, 1, 0);
+        let side = new THREE.Vector3().crossVectors(tangent, up).normalize();
+        if (side.lengthSq() < 0.01) {
+          side = new THREE.Vector3(1, 0, 0);
+        }
+
+        const camOffset = tangent.clone().negate().multiplyScalar(3.2)
+          .add(side.multiplyScalar(1.2))
+          .add(new THREE.Vector3(0, 1.0, 0));
         const desiredCamPos = rocketPos.clone().add(camOffset);
 
         this.camera.position.lerp(desiredCamPos, 0.08);
