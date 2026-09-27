@@ -1,6 +1,6 @@
 /**
  * CINEMATIC 3D TRAJECTORY SIMULATOR (Three.js)
- * High-fidelity, stylized cartoon rocket & interplanetary trajectory visualizer.
+ * High-contrast, cel-shaded chalk cartoon rocket & chalkboard astrodynamics trajectory visualizer.
  * Supports: Apollo 11, Perseverance (Mars 2020), Curiosity, Voyager 1, Cassini, Viking 1.
  */
 
@@ -27,16 +27,18 @@ class TrajectorySimulator {
 
     // Visual elements
     this.rocketGroup = null;
-    this.flameMesh = null;
-    this.flameCore = null;
+    this.flamePuff1 = null;
+    this.flamePuff2 = null;
+    this.flamePuff3 = null;
     this.particlesGroup = null;
     this.trajectoryTube = null;
+    this.chalkDashedLine = null;
     this.activeTrailMesh = null;
     this.trajectoryCurve = null;
     this.trajectoryPoints = [];
     this.landingBeacon = null;
-    this.beaconDiamond = null;
-    this.boosterMesh = null;
+    this.chalkLander = null;
+    this.hasLanderPopped = false;
     this.stagedBooster = null;
     this.isStaged = false;
     this.waypointGroup = null;
@@ -73,9 +75,9 @@ class TrajectorySimulator {
         transitDurationStr: '3 Days, 3 Hours, 49 Mins',
         maxVelocityKmS: 11.2,
         waypoints: [
-          { t: 0.12, label: 'EARTH DEPARTURE / TLI' },
+          { t: 0.15, label: 'EARTH DEPARTURE / TLI' },
           { t: 0.50, label: 'CISLUNAR MID-COURSE' },
-          { t: 0.88, label: 'LUNAR ORBIT / PDI' }
+          { t: 0.90, label: 'LUNAR ORBIT / PDI' }
         ],
         phases: [
           {
@@ -122,9 +124,9 @@ class TrajectorySimulator {
         targetBody: 'Mars',
         targetPlanet: 'Mars',
         craftType: 'mars-rover',
-        color: 0xf97316,
-        colorHex: '#F97316',
-        accentColor: '#F97316',
+        color: 0xfb923c,
+        colorHex: '#FB923C',
+        accentColor: '#FB923C',
         landingSite: 'Jezero Crater Delta',
         landingCoords: '18.38° N, 77.58° E',
         landingDate: 'February 18, 2021',
@@ -136,9 +138,9 @@ class TrajectorySimulator {
         transitDurationStr: '6 Months, 20 Days',
         maxVelocityKmS: 24.6,
         waypoints: [
-          { t: 0.12, label: 'EARTH DEPARTURE / ESCAPE' },
+          { t: 0.15, label: 'EARTH DEPARTURE / ESCAPE' },
           { t: 0.50, label: 'HOHMANN INTERPLANETARY APHELION' },
-          { t: 0.88, label: 'MARS ATMOSPHERIC ENTRY (EDL)' }
+          { t: 0.90, label: 'MARS ATMOSPHERIC ENTRY (EDL)' }
         ],
         phases: [
           {
@@ -185,9 +187,9 @@ class TrajectorySimulator {
         targetBody: 'Deep Space',
         targetPlanet: 'Jupiter',
         craftType: 'probe',
-        color: 0xfacc15,
-        colorHex: '#FACC15',
-        accentColor: '#FACC15',
+        color: 0xfde047,
+        colorHex: '#FDE047',
+        accentColor: '#FDE047',
         landingSite: 'Interstellar Space (Heliopause)',
         landingCoords: 'Declination +12° 02\', R.A. 17h 14m',
         landingDate: 'Crossed Heliopause August 25, 2012',
@@ -199,8 +201,8 @@ class TrajectorySimulator {
         transitDurationStr: '48 Years, 6 Months',
         maxVelocityKmS: 61.2,
         waypoints: [
-          { t: 0.12, label: 'EARTH DEPARTURE' },
-          { t: 0.38, label: 'JUPITER GRAVITY ASSIST (+16 km/s)' },
+          { t: 0.15, label: 'EARTH DEPARTURE' },
+          { t: 0.40, label: 'JUPITER GRAVITY ASSIST (+16 km/s)' },
           { t: 0.65, label: 'SATURN GRAVITY ASSIST (+35° DEFLECTION)' }
         ],
         phases: [
@@ -248,9 +250,9 @@ class TrajectorySimulator {
         targetBody: 'Mars',
         targetPlanet: 'Mars',
         craftType: 'mars-rover',
-        color: 0x10b981,
-        colorHex: '#10B981',
-        accentColor: '#10B981',
+        color: 0x34d399,
+        colorHex: '#34D399',
+        accentColor: '#34D399',
         landingSite: 'Gale Crater (Mount Sharp)',
         landingCoords: '4.59° S, 137.44° E',
         landingDate: 'August 6, 2012',
@@ -262,9 +264,9 @@ class TrajectorySimulator {
         transitDurationStr: '8 Months, 11 Days',
         maxVelocityKmS: 22.8,
         waypoints: [
-          { t: 0.12, label: 'EARTH DEPARTURE / TLI' },
+          { t: 0.15, label: 'EARTH DEPARTURE / TLI' },
           { t: 0.50, label: 'INTERPLANETARY CRUISE' },
-          { t: 0.88, label: 'GALE CRATER SKYCRANE EDL' }
+          { t: 0.90, label: 'GALE CRATER SKYCRANE EDL' }
         ],
         phases: [
           {
@@ -304,9 +306,9 @@ class TrajectorySimulator {
         targetBody: 'Saturn',
         targetPlanet: 'Saturn',
         craftType: 'probe',
-        color: 0xf59e0b,
-        colorHex: '#F59E0B',
-        accentColor: '#F59E0B',
+        color: 0xfbbf24,
+        colorHex: '#FBBF24',
+        accentColor: '#FBBF24',
         landingSite: 'Saturn Upper Atmosphere (Grand Finale)',
         landingCoords: 'Sub-Saturn Equator Entry',
         landingDate: 'September 15, 2017',
@@ -363,150 +365,194 @@ class TrajectorySimulator {
     this.createProceduralRocket();
   }
 
-  // --- 1. PROCEDURAL 3D CARTOON ROCKET & FLAME MESH (SCALE 4.2) ---
+  // --- 1. PROCEDURAL MINIATURE CEL-SHADED CHALK ROCKET (SCALE = 0.55) ---
   createProceduralRocket() {
     this.rocketGroup = new THREE.Group();
     this.rocketGroup.name = 'TrajectoryRocketGroup';
 
-    // Cel-shaded / toon material matching solar system aesthetic
-    const bodyMat = new THREE.MeshStandardMaterial({
+    // Cel-shaded ("shell-shaded"), matte chalk-colored materials with toon gradient
+    const toonGrad = this.app.toonGradient || null;
+
+    // 1. Chalk White Fuselage
+    const chalkWhiteMat = new THREE.MeshToonMaterial({
       color: 0xffffff,
-      roughness: 0.15,
-      metalness: 0.05
+      roughness: 0.9,
+      gradientMap: toonGrad
     });
 
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: 0xdc2626, // Vivid NASA red
-      roughness: 0.25,
-      metalness: 0.15
+    // 2. Chalk Crimson Accents (Nose & Fins)
+    const chalkCrimsonMat = new THREE.MeshToonMaterial({
+      color: 0xf43f5e,
+      roughness: 0.9,
+      gradientMap: toonGrad
     });
 
-    const darkMat = new THREE.MeshStandardMaterial({
+    // 3. Chalk Cyan Porthole
+    const chalkCyanMat = new THREE.MeshToonMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.6,
+      gradientMap: toonGrad
+    });
+
+    // 4. Charcoal Engine Base
+    const charcoalMat = new THREE.MeshToonMaterial({
       color: 0x1e293b,
-      roughness: 0.4,
-      metalness: 0.8
+      roughness: 0.8,
+      gradientMap: toonGrad
     });
 
-    // 1. Fuselage cylinder
-    const fuselageGeo = new THREE.CylinderGeometry(0.48, 0.60, 2.8, 20);
-    const fuselage = new THREE.Mesh(fuselageGeo, bodyMat);
+    // High-Contrast Dark Ink Outline Material
+    const inkOutlineMat = new THREE.MeshBasicMaterial({
+      color: 0x050816,
+      side: THREE.BackSide
+    });
+
+    // --- A. Fuselage: Bulbous capsule cylinder with slight taper ---
+    const fuselageGeo = new THREE.CylinderGeometry(0.36, 0.44, 1.7, 20);
+    const fuselage = new THREE.Mesh(fuselageGeo, chalkWhiteMat);
     fuselage.castShadow = true;
     this.rocketGroup.add(fuselage);
 
-    // Red racing stripe
-    const stripeGeo = new THREE.CylinderGeometry(0.53, 0.53, 0.4, 20);
-    const stripe = new THREE.Mesh(stripeGeo, accentMat);
-    stripe.position.y = 0.45;
+    // Inverted hull ink outline for fuselage
+    const fuseOutlineGeo = new THREE.CylinderGeometry(0.36 * 1.08, 0.44 * 1.08, 1.7 * 1.02, 20);
+    const fuseOutline = new THREE.Mesh(fuseOutlineGeo, inkOutlineMat);
+    this.rocketGroup.add(fuseOutline);
+
+    // Chalk crimson mid-stripe band
+    const stripeGeo = new THREE.CylinderGeometry(0.405, 0.405, 0.28, 20);
+    const stripe = new THREE.Mesh(stripeGeo, chalkCrimsonMat);
+    stripe.position.y = 0.25;
     this.rocketGroup.add(stripe);
 
-    // 2. Conical Nosecone
-    const noseGeo = new THREE.ConeGeometry(0.48, 1.25, 20);
-    const nose = new THREE.Mesh(noseGeo, accentMat);
-    nose.position.y = 2.02;
+    // --- B. Conical Chalk-Red Nosecone ---
+    const noseGeo = new THREE.ConeGeometry(0.36, 0.85, 20);
+    const nose = new THREE.Mesh(noseGeo, chalkCrimsonMat);
+    nose.position.y = 1.275;
     this.rocketGroup.add(nose);
 
-    // Tip needle
-    const needleGeo = new THREE.CylinderGeometry(0.04, 0.08, 0.6, 8);
-    const needle = new THREE.Mesh(needleGeo, darkMat);
-    needle.position.y = 2.8;
+    const noseOutlineGeo = new THREE.ConeGeometry(0.36 * 1.08, 0.85 * 1.05, 20);
+    const noseOutline = new THREE.Mesh(noseOutlineGeo, inkOutlineMat);
+    noseOutline.position.y = 1.275;
+    this.rocketGroup.add(noseOutline);
+
+    // Tiny radio antenna needle at tip
+    const needleGeo = new THREE.CylinderGeometry(0.02, 0.035, 0.45, 8);
+    const needle = new THREE.Mesh(needleGeo, charcoalMat);
+    needle.position.y = 1.88;
     this.rocketGroup.add(needle);
 
-    // 3. Four Cartoon Aerodynamic Fins
+    // --- C. Round Chalk-Cyan Observation Porthole ---
+    const windowGroup = new THREE.Group();
+    const portHoleGeo = new THREE.CircleGeometry(0.13, 18);
+    const portHole = new THREE.Mesh(portHoleGeo, chalkCyanMat);
+    portHole.position.set(0, 0.32, 0.405);
+
+    const portHoleRimGeo = new THREE.RingGeometry(0.125, 0.17, 18);
+    const portHoleRim = new THREE.Mesh(portHoleRimGeo, charcoalMat);
+    portHoleRim.position.set(0, 0.32, 0.406);
+    windowGroup.add(portHole);
+    windowGroup.add(portHoleRim);
+    this.rocketGroup.add(windowGroup);
+
+    // --- D. 3 Angled Cartoon Fins with Distinct Dark Bevel Borders ---
     const finShape = new THREE.Shape();
     finShape.moveTo(0, 0);
-    finShape.lineTo(0.75, -0.45);
-    finShape.lineTo(0.65, -0.95);
-    finShape.lineTo(0, -0.75);
+    finShape.lineTo(0.55, -0.32);
+    finShape.lineTo(0.48, -0.72);
+    finShape.lineTo(0, -0.55);
     finShape.closePath();
 
-    const extrudeSettings = { depth: 0.08, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.03, bevelThickness: 0.03 };
+    const extrudeSettings = { depth: 0.06, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.02, bevelThickness: 0.02 };
     const finGeo = new THREE.ExtrudeGeometry(finShape, extrudeSettings);
 
-    for (let i = 0; i < 4; i++) {
-      const fin = new THREE.Mesh(finGeo, accentMat);
-      fin.rotation.y = (i * Math.PI) / 2;
-      fin.position.y = -0.65;
+    for (let i = 0; i < 3; i++) {
+      const fin = new THREE.Mesh(finGeo, chalkCrimsonMat);
+      fin.rotation.y = (i * Math.PI * 2) / 3;
+      fin.position.y = -0.42;
       this.rocketGroup.add(fin);
+
+      // Dark outline for fin
+      const finOut = new THREE.Mesh(finGeo, inkOutlineMat);
+      finOut.rotation.y = (i * Math.PI * 2) / 3;
+      finOut.position.y = -0.42;
+      finOut.scale.set(1.08, 1.08, 1.08);
+      this.rocketGroup.add(finOut);
     }
 
-    // 4. Rocket Engine Nozzle
-    const nozzleGeo = new THREE.CylinderGeometry(0.22, 0.48, 0.65, 16, 1, true);
-    const nozzle = new THREE.Mesh(nozzleGeo, darkMat);
-    nozzle.position.y = -1.68;
+    // --- E. Retro-Rocket Engine Nozzle ---
+    const nozzleGeo = new THREE.CylinderGeometry(0.15, 0.35, 0.45, 16, 1, true);
+    const nozzle = new THREE.Mesh(nozzleGeo, charcoalMat);
+    nozzle.position.y = -1.05;
     this.rocketGroup.add(nozzle);
 
-    // 5. Twin Strap-on Boosters (Detachable at Phase 1 Staging)
-    this.boosterMesh = new THREE.Group();
-    const boosterBodyGeo = new THREE.CylinderGeometry(0.24, 0.24, 2.2, 14);
-    const boosterNoseGeo = new THREE.ConeGeometry(0.24, 0.65, 14);
-    const bMat = bodyMat.clone();
+    const nozzleOutGeo = new THREE.CylinderGeometry(0.15 * 1.1, 0.35 * 1.1, 0.45 * 1.02, 16, 1, true);
+    const nozzleOut = new THREE.Mesh(nozzleOutGeo, inkOutlineMat);
+    nozzleOut.position.y = -1.05;
+    this.rocketGroup.add(nozzleOut);
 
-    [-0.72, 0.72].forEach(xOffset => {
-      const bCyl = new THREE.Mesh(boosterBodyGeo, bMat);
-      bCyl.position.set(xOffset, -0.4, 0);
-      const bNose = new THREE.Mesh(boosterNoseGeo, accentMat);
-      bNose.position.set(xOffset, 0.95, 0);
-      this.boosterMesh.add(bCyl);
-      this.boosterMesh.add(bNose);
-    });
-    this.rocketGroup.add(this.boosterMesh);
-
-    // 6. Cartoon Flame Cone & Emissive Inner Core
-    const flameGeo = new THREE.ConeGeometry(0.55, 2.6, 14);
-    flameGeo.translate(0, -1.3, 0);
-    const flameMat = new THREE.MeshStandardMaterial({
-      color: 0xff5500,
-      emissive: 0xff6600,
-      emissiveIntensity: 1.8,
-      transparent: true,
-      opacity: 0.95,
-      roughness: 0.2
-    });
-    this.flameMesh = new THREE.Mesh(flameGeo, flameMat);
-    this.flameMesh.position.y = -1.68;
-    this.rocketGroup.add(this.flameMesh);
-
-    // Inner bright cyan/white core
-    const coreGeo = new THREE.ConeGeometry(0.28, 1.6, 12);
-    coreGeo.translate(0, -0.8, 0);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+    // --- F. Chalk Flame Puffs (Layered Cartoon Teardrops/Spheres) ---
+    // Outer flame puff (Chalk Tangerine #FB923C)
+    const flameGeo1 = new THREE.SphereGeometry(0.28, 12, 12);
+    const flameMat1 = new THREE.MeshBasicMaterial({
+      color: 0xfb923c,
       transparent: true,
       opacity: 0.95
     });
-    this.flameCore = new THREE.Mesh(coreGeo, coreMat);
-    this.flameCore.position.y = -1.68;
-    this.rocketGroup.add(this.flameCore);
+    this.flamePuff1 = new THREE.Mesh(flameGeo1, flameMat1);
+    this.flamePuff1.position.y = -1.35;
+    this.flamePuff1.scale.set(1.0, 1.4, 1.0);
+    this.rocketGroup.add(this.flamePuff1);
 
-    // BOLD SCALE 4.2 for prominent visibility in space
-    this.rocketGroup.scale.setScalar(4.2);
+    // Inner bright core (Chalk Lemon #FDE047)
+    const flameGeo2 = new THREE.SphereGeometry(0.18, 10, 10);
+    const flameMat2 = new THREE.MeshBasicMaterial({
+      color: 0xfde047,
+      transparent: true,
+      opacity: 0.98
+    });
+    this.flamePuff2 = new THREE.Mesh(flameGeo2, flameMat2);
+    this.flamePuff2.position.y = -1.28;
+    this.flamePuff2.scale.set(0.9, 1.2, 0.9);
+    this.rocketGroup.add(this.flamePuff2);
+
+    // Lower trailing spark pop
+    const flameGeo3 = new THREE.SphereGeometry(0.12, 8, 8);
+    this.flamePuff3 = new THREE.Mesh(flameGeo3, flameMat2.clone());
+    this.flamePuff3.position.y = -1.72;
+    this.rocketGroup.add(this.flamePuff3);
+
+    // MINIATURE PROPORTIONS: scale = 0.55 (Total height ~ 1.2 units)
+    this.rocketGroup.scale.setScalar(0.55);
     this.rocketGroup.visible = false;
     this.scene.add(this.rocketGroup);
 
-    // 7. Thrust Particle Smoke Puffs
+    // 7. Trailing Chalk Dust Particle System
     this.createSmokeParticleSystem();
 
-    // 8. Landing Beacon Marker
+    // 8. Destination Chalk Landing Beacon
     this.createLandingBeacon();
   }
 
   createSmokeParticleSystem() {
     this.particlesGroup = new THREE.Group();
     this.particles = [];
-    const count = 50;
-    const geo = new THREE.SphereGeometry(0.35, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.75
-    });
+    const count = 45;
+    const geo = new THREE.SphereGeometry(0.12, 8, 8);
+    const chalkColors = [0xfde047, 0xfb923c, 0xfef08a, 0xffffff];
 
     for (let i = 0; i < count; i++) {
-      const p = new THREE.Mesh(geo, mat.clone());
+      const col = chalkColors[i % chalkColors.length];
+      const mat = new THREE.MeshBasicMaterial({
+        color: col,
+        transparent: true,
+        opacity: 0.8
+      });
+      const p = new THREE.Mesh(geo, mat);
       p.visible = false;
       p.userData = {
         life: 0,
-        maxLife: 1.2,
+        maxLife: 0.9,
         vel: new THREE.Vector3()
       };
       this.particlesGroup.add(p);
@@ -515,67 +561,118 @@ class TrajectorySimulator {
     this.scene.add(this.particlesGroup);
   }
 
+  // --- 2. DESTINATION CHALK LANDING BEACON & POP-UP LANDER ---
   createLandingBeacon() {
     this.landingBeacon = new THREE.Group();
     this.landingBeacon.name = 'TrajectoryLandingBeacon';
 
-    // Glowing target ring on surface
-    const ringGeo = new THREE.RingGeometry(1.6, 2.2, 32);
-    const ringMat = new THREE.MeshBasicMaterial({
+    // 1. Concentric Chalk Target Rings on Surface
+    const ringGeo1 = new THREE.RingGeometry(0.7, 0.85, 32);
+    const ringMat1 = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.9
     });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    this.landingBeacon.add(ring);
+    const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
+    ring1.rotation.x = Math.PI / 2;
+    this.landingBeacon.add(ring1);
 
-    // Vertical holographic laser column
-    const laserGeo = new THREE.CylinderGeometry(0.18, 0.18, 12.0, 12);
-    laserGeo.translate(0, 6.0, 0);
-    const laserMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+    const ringGeo2 = new THREE.RingGeometry(1.15, 1.25, 32);
+    const ringMat2 = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.6
+      opacity: 0.7
     });
-    const laser = new THREE.Mesh(laserGeo, laserMat);
-    this.landingBeacon.add(laser);
+    const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
+    ring2.rotation.x = Math.PI / 2;
+    this.landingBeacon.add(ring2);
 
-    // Top pulsating beacon diamond (Radius 2.5)
-    const diamondGeo = new THREE.OctahedronGeometry(2.5, 0);
-    diamondGeo.translate(0, 13.0, 0);
-    const diamondMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x38bdf8,
-      emissiveIntensity: 1.5,
-      roughness: 0.2
+    // 2. Miniature Cel-shaded Lander & Memorial Flag
+    this.chalkLander = new THREE.Group();
+
+    // Golden foil octagonal descent stage
+    const baseGeo = new THREE.CylinderGeometry(0.28, 0.38, 0.2, 8);
+    const baseMat = new THREE.MeshToonMaterial({
+      color: 0xf59e0b,
+      gradientMap: this.app.toonGradient
     });
-    this.beaconDiamond = new THREE.Mesh(diamondGeo, diamondMat);
-    this.landingBeacon.add(this.beaconDiamond);
+    const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+    baseMesh.position.y = 0.1;
+    this.chalkLander.add(baseMesh);
+
+    // Outline
+    const baseOutGeo = new THREE.CylinderGeometry(0.28 * 1.1, 0.38 * 1.1, 0.2 * 1.1, 8);
+    const outMat = new THREE.MeshBasicMaterial({ color: 0x050816, side: THREE.BackSide });
+    baseMesh.add(new THREE.Mesh(baseOutGeo, outMat));
+
+    // White capsule top
+    const capGeo = new THREE.DodecahedronGeometry(0.16);
+    const capMat = new THREE.MeshToonMaterial({
+      color: 0xffffff,
+      gradientMap: this.app.toonGradient
+    });
+    const capMesh = new THREE.Mesh(capGeo, capMat);
+    capMesh.position.y = 0.28;
+    this.chalkLander.add(capMesh);
+
+    // 4 Landing Struts
+    for (let i = 0; i < 4; i++) {
+      const legGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.35, 6);
+      const legMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const leg = new THREE.Mesh(legGeo, legMat);
+      const angle = (i * Math.PI) / 2;
+      leg.position.set(Math.cos(angle) * 0.28, 0.07, Math.sin(angle) * 0.28);
+      leg.rotation.z = Math.PI / 6;
+      this.chalkLander.add(leg);
+    }
+
+    // Miniature Flagpole & Chalk Crimson Flag
+    const poleGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.8, 6);
+    const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const pole = new THREE.Mesh(poleGeo, poleMat);
+    pole.position.set(0.22, 0.4, 0);
+    this.chalkLander.add(pole);
+
+    const flagShape = new THREE.Shape();
+    flagShape.moveTo(0, 0);
+    flagShape.lineTo(0.28, 0.09);
+    flagShape.lineTo(0, 0.18);
+    flagShape.closePath();
+    const flagGeo = new THREE.ShapeGeometry(flagShape);
+    const flagMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, side: THREE.DoubleSide });
+    const flag = new THREE.Mesh(flagGeo, flagMat);
+    flag.position.set(0.22, 0.58, 0);
+    this.chalkLander.add(flag);
+
+    this.chalkLander.scale.set(0.001, 0.001, 0.001);
+    this.landingBeacon.add(this.chalkLander);
 
     this.landingBeacon.visible = false;
     this.scene.add(this.landingBeacon);
   }
 
-  // --- 2. TRAJECTORY SPLINE & BOLD GLOWING 3D RIBBON ---
+  // --- 3. HIGH-CONTRAST CHALK-SKETCH TRAJECTORY DESIGN ---
   generateMissionSpline(mission) {
-    // Clear old tube
+    // Clear old elements
+    if (this.chalkDashedLine) {
+      this.scene.remove(this.chalkDashedLine);
+      this.chalkDashedLine.geometry.dispose();
+      this.chalkDashedLine.material.dispose();
+      this.chalkDashedLine = null;
+    }
     if (this.trajectoryTube) {
       this.scene.remove(this.trajectoryTube);
       this.trajectoryTube.geometry.dispose();
       this.trajectoryTube.material.dispose();
       this.trajectoryTube = null;
     }
-
-    // Clear active trail
     if (this.activeTrailMesh) {
       this.scene.remove(this.activeTrailMesh);
       if (this.activeTrailMesh.geometry) this.activeTrailMesh.geometry.dispose();
       this.activeTrailMesh = null;
     }
-
-    // Clear waypoints
     if (this.waypointGroup) {
       this.scene.remove(this.waypointGroup);
       this.waypointGroup = null;
@@ -601,18 +698,18 @@ class TrajectorySimulator {
         moonPos.copy(earthPos).add(new THREE.Vector3(7.5, 0, 0));
       }
 
-      // Point 1: Launch Pad on Earth
+      // Point 1: Launch Pad at Earth's surface
       points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
       // Point 2: Low Earth Orbit (LEO)
-      points.push(earthPos.clone().add(new THREE.Vector3(6, 6, 3)));
+      points.push(earthPos.clone().add(new THREE.Vector3(3.5, 4.8, 1.8)));
       // Point 3: Translunar Injection coast
-      const mid1 = new THREE.Vector3().lerpVectors(earthPos, moonPos, 0.45).add(new THREE.Vector3(0, 5, 3));
+      const mid1 = new THREE.Vector3().lerpVectors(earthPos, moonPos, 0.45).add(new THREE.Vector3(0, 4.5, 2.5));
       points.push(mid1);
       // Point 4: Approaching Moon gravity well
-      const mid2 = new THREE.Vector3().lerpVectors(earthPos, moonPos, 0.8).add(new THREE.Vector3(0, -2, -1.5));
+      const mid2 = new THREE.Vector3().lerpVectors(earthPos, moonPos, 0.8).add(new THREE.Vector3(0, -1.8, -1.2));
       points.push(mid2);
-      // Point 5: Lunar Orbit insertion & descent
-      points.push(moonPos.clone().add(new THREE.Vector3(-1.4, 2.0, 1.0)));
+      // Point 5: Lunar Orbit insertion
+      points.push(moonPos.clone().add(new THREE.Vector3(-1.2, 1.8, 0.9)));
       // Point 6: Touchdown at Tranquility Base
       points.push(moonPos.clone().add(new THREE.Vector3(0, 1.15, 0)));
 
@@ -627,9 +724,9 @@ class TrajectorySimulator {
       }
 
       // Point 1: Earth Liftoff
-      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.2, 0)));
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
       // Point 2: Earth Escape Trajectory
-      points.push(earthPos.clone().add(new THREE.Vector3(9, 7, 7)));
+      points.push(earthPos.clone().add(new THREE.Vector3(6, 5.5, 4.5)));
 
       const rEarth = earthPos.length();
       const rMars = marsPos.length();
@@ -642,7 +739,7 @@ class TrajectorySimulator {
         const frac = s / (steps + 1);
         const currentAngle = angleEarth + (angleMars - angleEarth) * frac;
         const currentRadius = THREE.MathUtils.lerp(rEarth, rMars, Math.sin((frac * Math.PI) / 2));
-        const yOffset = Math.sin(frac * Math.PI) * 8.5; // slight orbital inclination
+        const yOffset = Math.sin(frac * Math.PI) * 7.5;
         points.push(new THREE.Vector3(
           Math.cos(currentAngle) * currentRadius,
           yOffset,
@@ -651,7 +748,7 @@ class TrajectorySimulator {
       }
 
       // Approach Mars entry interface
-      points.push(marsPos.clone().add(new THREE.Vector3(-5, 6, -4)));
+      points.push(marsPos.clone().add(new THREE.Vector3(-4.5, 5, -3.5)));
       // Parachute & Skycrane descent
       points.push(marsPos.clone().add(new THREE.Vector3(0, 3.2, 0)));
 
@@ -663,50 +760,60 @@ class TrajectorySimulator {
       const jupPos = (jupObj && jupObj.mesh) ? jupObj.mesh.position.clone() : new THREE.Vector3(195, 0, 0);
       const satPos = (satObj && satObj.mesh) ? satObj.mesh.position.clone() : new THREE.Vector3(255, 0, 0);
 
-      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.2, 0)));
-      points.push(earthPos.clone().add(new THREE.Vector3(14, 9, 9)));
-      points.push(new THREE.Vector3().lerpVectors(earthPos, jupPos, 0.5).add(new THREE.Vector3(0, 7, -12)));
-      // Jupiter slingshot flyby point
-      points.push(jupPos.clone().add(new THREE.Vector3(-16, 9, 14)));
-      // Transit to Saturn
-      points.push(new THREE.Vector3().lerpVectors(jupPos, satPos, 0.5).add(new THREE.Vector3(0, 20, -18)));
-      // Saturn slingshot deflection out of ecliptic
-      points.push(satPos.clone().add(new THREE.Vector3(-14, 25, -20)));
-      // Interstellar outward vector
-      points.push(satPos.clone().add(new THREE.Vector3(100, 95, -135)));
-      points.push(satPos.clone().add(new THREE.Vector3(200, 180, -270)));
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
+      points.push(earthPos.clone().add(new THREE.Vector3(10, 7, 7)));
+      points.push(new THREE.Vector3().lerpVectors(earthPos, jupPos, 0.5).add(new THREE.Vector3(0, 6, -10)));
+      points.push(jupPos.clone().add(new THREE.Vector3(-14, 8, 12)));
+      points.push(new THREE.Vector3().lerpVectors(jupPos, satPos, 0.5).add(new THREE.Vector3(0, 18, -15)));
+      points.push(satPos.clone().add(new THREE.Vector3(-12, 22, -18)));
+      points.push(satPos.clone().add(new THREE.Vector3(90, 85, -120)));
+      points.push(satPos.clone().add(new THREE.Vector3(180, 160, -240)));
 
     } else {
       // Default Interplanetary Arc (Cassini / general)
       const satObj = this.app.planets['Saturn'];
       const satPos = (satObj && satObj.mesh) ? satObj.mesh.position.clone() : new THREE.Vector3(255, 0, 0);
 
-      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.2, 0)));
-      points.push(earthPos.clone().add(new THREE.Vector3(16, 12, 12)));
-      points.push(new THREE.Vector3(140, 20, 40));
-      points.push(satPos.clone().add(new THREE.Vector3(-10, 15, -10)));
+      points.push(earthPos.clone().add(new THREE.Vector3(0, 4.0, 0)));
+      points.push(earthPos.clone().add(new THREE.Vector3(12, 9, 9)));
+      points.push(new THREE.Vector3(140, 18, 40));
+      points.push(satPos.clone().add(new THREE.Vector3(-8, 12, -8)));
       points.push(satPos.clone().add(new THREE.Vector3(0, 4, 0)));
     }
 
     this.trajectoryCurve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.5);
     this.trajectoryPoints = points;
 
-    // 1. Build BOLD glowing 3D trajectory tube (radius: 1.2, emissive: 1.0)
-    const tubeGeo = new THREE.TubeGeometry(this.trajectoryCurve, 200, 1.2, 10, false);
+    // --- 1. Primary Line: Bold, Unlit Chalk-Dashed Ribbon ---
+    const curvePoints = this.trajectoryCurve.getPoints(120);
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(curvePoints);
+    const lineMat = new THREE.LineDashedMaterial({
+      color: mission.color,
+      dashSize: 1.8,
+      gapSize: 0.8,
+      scale: 1,
+      linewidth: 3
+    });
+    this.chalkDashedLine = new THREE.Line(lineGeo, lineMat);
+    this.chalkDashedLine.computeLineDistances();
+    this.chalkDashedLine.name = 'ChalkDashedLine';
+    this.scene.add(this.chalkDashedLine);
+
+    // --- 2. Overlay Glowing Chalk-Dust Tube (translucent soft glow) ---
+    const tubeGeo = new THREE.TubeGeometry(this.trajectoryCurve, 120, 0.35, 8, false);
     const tubeMat = new THREE.MeshStandardMaterial({
       color: mission.color,
       emissive: mission.color,
-      emissiveIntensity: 1.0,
-      roughness: 0.25,
+      emissiveIntensity: 0.8,
+      roughness: 0.85,
       transparent: true,
-      opacity: 0.55
+      opacity: 0.35
     });
-
     this.trajectoryTube = new THREE.Mesh(tubeGeo, tubeMat);
     this.trajectoryTube.name = 'TrajectoryTube';
     this.scene.add(this.trajectoryTube);
 
-    // 2. Build Milestone Waypoint Rings & Billboard Labels
+    // --- 3. Chalk Waypoint Markers (Target Rings & Delta-V Arrows) ---
     this.createWaypointMarkers(mission);
   }
 
@@ -715,31 +822,56 @@ class TrajectorySimulator {
     this.waypointGroup.name = 'TrajectoryWaypoints';
 
     const waypoints = mission.waypoints || [
-      { t: 0.12, label: 'EARTH DEPARTURE' },
-      { t: 0.50, label: 'MID-COURSE CRUISE' },
-      { t: 0.88, label: 'DESTINATION INSERTION' }
+      { t: 0.15, label: 'EARTH DEPARTURE / TLI' },
+      { t: 0.50, label: 'MID-COURSE BURN' },
+      { t: 0.90, label: 'DESTINATION INSERTION' }
     ];
 
     waypoints.forEach(wp => {
       const pos = this.trajectoryCurve.getPointAt(wp.t);
       const tangent = this.trajectoryCurve.getTangentAt(wp.t);
 
-      // Glowing orientation ring
-      const ringGeo = new THREE.TorusGeometry(4.5, 0.28, 8, 28);
-      const ringMat = new THREE.MeshStandardMaterial({
-        color: mission.color,
-        emissive: mission.color,
-        emissiveIntensity: 1.4,
-        roughness: 0.2
-      });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.position.copy(pos);
-      ring.lookAt(pos.clone().add(tangent));
-      this.waypointGroup.add(ring);
+      // Chalk target ring group aligned with curve
+      const wpGroup = new THREE.Group();
+      wpGroup.position.copy(pos);
+      wpGroup.lookAt(pos.clone().add(tangent));
 
-      // Floating billboard canvas sprite
+      // Concentric dashed rings
+      const r1Geo = new THREE.RingGeometry(1.6, 1.75, 32);
+      const r1Mat = new THREE.MeshBasicMaterial({
+        color: mission.color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85
+      });
+      const r1 = new THREE.Mesh(r1Geo, r1Mat);
+      wpGroup.add(r1);
+
+      const r2Geo = new THREE.RingGeometry(2.2, 2.32, 32);
+      const r2Mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.5
+      });
+      const r2 = new THREE.Mesh(r2Geo, r2Mat);
+      wpGroup.add(r2);
+
+      // Chalk Delta-V direction arrow cone pointing along flight tangent
+      const arrowGeo = new THREE.ConeGeometry(0.35, 1.1, 10);
+      arrowGeo.rotateX(Math.PI / 2);
+      const arrowMat = new THREE.MeshBasicMaterial({
+        color: mission.color
+      });
+      const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+      arrow.position.set(0, 0, 0.6);
+      wpGroup.add(arrow);
+
+      this.waypointGroup.add(wpGroup);
+
+      // Floating billboard canvas sprite label
       const sprite = this.createLabelSprite(wp.label, mission.colorHex);
-      sprite.position.copy(pos).add(new THREE.Vector3(0, 5.5, 0));
+      sprite.position.copy(pos).add(new THREE.Vector3(0, 2.6, 0));
       this.waypointGroup.add(sprite);
     });
 
@@ -776,7 +908,7 @@ class TrajectorySimulator {
     texture.minFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(16, 4, 1);
+    sprite.scale.set(12, 3, 1);
     return sprite;
   }
 
@@ -787,7 +919,7 @@ class TrajectorySimulator {
     }
 
     // Dynamic glowing trail drawn from t=0 to current progress
-    const sampleCount = Math.max(10, Math.round(this.progress * 120));
+    const sampleCount = Math.max(8, Math.round(this.progress * 100));
     const trailPoints = [];
     for (let i = 0; i <= sampleCount; i++) {
       const u = (i / sampleCount) * this.progress;
@@ -796,16 +928,16 @@ class TrajectorySimulator {
 
     if (trailPoints.length >= 2) {
       const trailCurve = new THREE.CatmullRomCurve3(trailPoints, false, 'centripetal', 0.5);
-      const geo = new THREE.TubeGeometry(trailCurve, sampleCount * 2, 1.4, 8, false);
+      const geo = new THREE.TubeGeometry(trailCurve, sampleCount * 2, 0.5, 8, false);
 
       if (!this.activeTrailMesh) {
         const mat = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
+          color: (this.currentMission && this.currentMission.color) ? this.currentMission.color : 0x38bdf8,
           emissive: (this.currentMission && this.currentMission.color) ? this.currentMission.color : 0x38bdf8,
-          emissiveIntensity: 2.2,
-          roughness: 0.1,
+          emissiveIntensity: 1.8,
+          roughness: 0.2,
           transparent: true,
-          opacity: 0.95
+          opacity: 0.85
         });
         this.activeTrailMesh = new THREE.Mesh(geo, mat);
         this.activeTrailMesh.name = 'ActiveTrajectoryTrail';
@@ -818,7 +950,7 @@ class TrajectorySimulator {
     }
   }
 
-  // --- 3. DOM HUD CREATION & EVENT LISTENERS ---
+  // --- 4. DOM HUD CREATION & EVENT LISTENERS ---
   createDOMElements() {
     let hud = document.getElementById('flight-telemetry-hud');
     if (!hud) {
@@ -970,6 +1102,7 @@ class TrajectorySimulator {
       rewindBtn.addEventListener('click', () => {
         this.isHoldingBlastoff = true;
         this.blastoffHoldTimer = this.blastoffHoldDuration;
+        this.hasLanderPopped = false;
         this.setProgress(0.0);
       });
     }
@@ -1004,6 +1137,7 @@ class TrajectorySimulator {
       replayBtn.addEventListener('click', () => {
         this.isHoldingBlastoff = true;
         this.blastoffHoldTimer = this.blastoffHoldDuration;
+        this.hasLanderPopped = false;
         this.setProgress(0.0);
       });
     }
@@ -1026,7 +1160,7 @@ class TrajectorySimulator {
     });
   }
 
-  // --- 4. LAUNCH MISSION (MAIN ENTRY POINT) ---
+  // --- 5. LAUNCH MISSION (MAIN ENTRY POINT) ---
   launchMission(missionId) {
     const mission = this.missions[missionId] || this.missions['apollo-11'];
     this.currentMission = mission;
@@ -1034,6 +1168,7 @@ class TrajectorySimulator {
     this.progress = 0.0;
     this.isPaused = false;
     this.isStaged = false;
+    this.hasLanderPopped = false;
     this.cameraMode = 'follow';
 
     // 1. Disable Camera Orbit Conflicts
@@ -1061,26 +1196,21 @@ class TrajectorySimulator {
     const badge = document.getElementById('sim-mission-badge');
     if (badge) badge.textContent = `${mission.name.toUpperCase()} • 3D TRAJECTORY`;
 
-    // 6. Generate bold 3D trajectory curve in solar system
+    // 6. Generate chalk-drawn 3D trajectory curve in solar system
     this.generateMissionSpline(mission);
 
-    // 7. Reset booster visibility and rocket position
-    if (this.boosterMesh) this.boosterMesh.visible = true;
-    if (this.stagedBooster) {
-      this.scene.remove(this.stagedBooster);
-      this.stagedBooster = null;
-    }
+    // 7. Reset rocket position
     this.rocketGroup.visible = true;
     this.setProgress(0.0);
 
-    // 8. Stage A (Earth Blast-off Camera Zoom):
-    // Smoothly tween camera to an intense close-up of Earth (dist ~ 20 units)
+    // 8. Stage A (Earth Blast-off Tight Framing):
+    // Smoothly tween camera to a tight, dramatic view of Earth and launchpad
     const earthObj = this.app.planets['Earth'];
     if (earthObj && earthObj.mesh) {
       const earthPos = new THREE.Vector3();
       earthObj.mesh.getWorldPosition(earthPos);
 
-      const destCam = new THREE.Vector3(earthPos.x + 14, earthPos.y + 9, earthPos.z + 14);
+      const destCam = new THREE.Vector3(earthPos.x + 2.8, earthPos.y + 5.2, earthPos.z + 3.8);
       const destTarget = new THREE.Vector3(earthPos.x, earthPos.y + 4.0, earthPos.z);
 
       if (window.TWEEN) {
@@ -1106,7 +1236,7 @@ class TrajectorySimulator {
     this.updateHUDDisplay();
   }
 
-  // --- 5. PROGRESS & SCRUBBING ---
+  // --- 6. PROGRESS & SCRUBBING ---
   setProgress(t) {
     if (t > 0.001) {
       this.isHoldingBlastoff = false;
@@ -1137,119 +1267,49 @@ class TrajectorySimulator {
     const lookTarget = pos.clone().add(tangent);
     this.rocketGroup.lookAt(lookTarget);
 
-    // Rotate so nosecone (+Y) points along the forward tangent
+    // Rotate so nosecone (+Y) points along the forward flight tangent
     this.rocketGroup.rotateX(Math.PI / 2);
 
-    // Engine flame firing
+    // Dynamic Chalk Flame Puffs Animation (pulsing cartoon teardrops)
     const isEngineFiring = this.progress < 0.95;
-    if (this.flameMesh && this.flameCore) {
-      this.flameMesh.visible = isEngineFiring;
-      this.flameCore.visible = isEngineFiring;
+    if (this.flamePuff1 && this.flamePuff2 && this.flamePuff3) {
+      this.flamePuff1.visible = isEngineFiring;
+      this.flamePuff2.visible = isEngineFiring;
+      this.flamePuff3.visible = isEngineFiring;
 
       if (isEngineFiring) {
-        const pulse = 1.0 + Math.sin(Date.now() * 0.03) * 0.35;
-        this.flameMesh.scale.set(pulse, pulse * (1.1 + Math.random() * 0.25), pulse);
-        this.flameCore.scale.set(pulse * 0.85, pulse * 0.95, pulse * 0.85);
+        const pulse = 1.0 + Math.sin(Date.now() * 0.035) * 0.35;
+        this.flamePuff1.scale.set(pulse, pulse * (1.1 + Math.random() * 0.25), pulse);
+        this.flamePuff2.scale.set(pulse * 0.85, pulse * 0.95, pulse * 0.85);
+        this.flamePuff3.position.y = -1.65 - Math.sin(Date.now() * 0.04) * 0.15;
       }
     }
 
-    // Booster Staging Separation at t ~ 0.18
-    if (this.progress >= 0.18) {
-      if (!this.isStaged) {
-        this.isStaged = true;
-        this.triggerBoosterSeparation(pos, tangent);
-      }
-    } else {
-      // Re-attach boosters if user scrubs back
-      this.isStaged = false;
-      if (this.boosterMesh) this.boosterMesh.visible = true;
-      if (this.stagedBooster) this.stagedBooster.visible = false;
-    }
-
-    // Landing Beacon at Destination
+    // Destination Chalk Landing Beacon & Pop-up Lander
     if (this.landingBeacon) {
       const showLanding = this.progress >= 0.90;
       this.landingBeacon.visible = showLanding;
       if (showLanding && this.trajectoryPoints.length > 0) {
         const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
         this.landingBeacon.position.copy(destPos);
+
+        // Trigger Pop-up Lander bounce animation
+        if (!this.hasLanderPopped && window.TWEEN && this.chalkLander) {
+          this.hasLanderPopped = true;
+          this.chalkLander.scale.set(0.001, 0.001, 0.001);
+          new TWEEN.Tween(this.chalkLander.scale)
+            .to({ x: 1, y: 1, z: 1 }, 700)
+            .easing(TWEEN.Easing.Back.Out)
+            .start();
+        }
+      } else {
+        this.hasLanderPopped = false;
+        if (this.chalkLander) this.chalkLander.scale.set(0.001, 0.001, 0.001);
       }
     }
   }
 
-  triggerBoosterSeparation(position, tangent) {
-    if (this.boosterMesh) this.boosterMesh.visible = false;
-
-    // Spawn falling booster group
-    if (!this.stagedBooster) {
-      this.stagedBooster = new THREE.Group();
-      const bGeo = new THREE.CylinderGeometry(0.24, 0.24, 2.2, 14);
-      const bMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 });
-      const bCyl1 = new THREE.Mesh(bGeo, bMat);
-      bCyl1.position.x = -1.2;
-      const bCyl2 = new THREE.Mesh(bGeo, bMat);
-      bCyl2.position.x = 1.2;
-      this.stagedBooster.add(bCyl1);
-      this.stagedBooster.add(bCyl2);
-      this.stagedBooster.scale.setScalar(4.2);
-      this.scene.add(this.stagedBooster);
-    }
-
-    this.stagedBooster.visible = true;
-    this.stagedBooster.position.copy(position);
-    this.stagedBooster.userData = {
-      vel: tangent.clone().negate().multiplyScalar(4.5).add(new THREE.Vector3(0, -2, 0)),
-      rotSpeed: 0.05
-    };
-
-    // Burst of smoke puff particles
-    this.emitStagingSmoke(position);
-  }
-
-  emitStagingSmoke(position) {
-    if (!this.particles) return;
-    this.particles.forEach((p, idx) => {
-      p.visible = true;
-      p.position.copy(position).add(new THREE.Vector3(
-        (Math.random() - 0.5) * 3.0,
-        (Math.random() - 0.5) * 3.0,
-        (Math.random() - 0.5) * 3.0
-      ));
-      p.userData.life = 0;
-      p.userData.maxLife = 1.0 + Math.random() * 0.8;
-      p.userData.vel.set(
-        (Math.random() - 0.5) * 6.0,
-        (Math.random() - 0.5) * 6.0,
-        (Math.random() - 0.5) * 6.0
-      );
-    });
-  }
-
-  emitLaunchSmoke(delta) {
-    if (!this.particles || !this.rocketGroup) return;
-    const pos = this.rocketGroup.position;
-    // Emit periodic ground smoke clouds during pad hold
-    for (let i = 0; i < 4; i++) {
-      const p = this.particles[Math.floor(Math.random() * this.particles.length)];
-      if (p && !p.visible) {
-        p.visible = true;
-        p.position.copy(pos).add(new THREE.Vector3(
-          (Math.random() - 0.5) * 2.5,
-          -1.5,
-          (Math.random() - 0.5) * 2.5
-        ));
-        p.userData.life = 0;
-        p.userData.maxLife = 1.2;
-        p.userData.vel.set(
-          (Math.random() - 0.5) * 5.0,
-          Math.random() * 1.5,
-          (Math.random() - 0.5) * 5.0
-        );
-      }
-    }
-  }
-
-  // --- 6. ANIMATION TICK (Called from script.js animate loop) ---
+  // --- 7. ANIMATION TICK (Called from script.js animate loop) ---
   update(delta) {
     if (!this.isActive) return;
 
@@ -1257,7 +1317,7 @@ class TrajectorySimulator {
     if (this.isHoldingBlastoff) {
       this.blastoffHoldTimer -= delta;
       this.setProgress(0.0);
-      this.emitLaunchSmoke(delta);
+      this.emitChalkDustPuffs(delta);
 
       if (this.blastoffHoldTimer <= 0) {
         this.isHoldingBlastoff = false;
@@ -1268,12 +1328,12 @@ class TrajectorySimulator {
       this.setProgress(this.progress + step);
     }
 
-    // Emit atmospheric liftoff smoke puffs during first 15%
-    if (this.progress > 0.0 && this.progress < 0.15 && !this.isPaused) {
-      this.emitLiftoffPuffs(delta);
+    // Emit trailing chalk dust puffs while cruising
+    if (this.progress > 0.0 && this.progress < 0.95 && !this.isPaused) {
+      this.emitChalkDustPuffs(delta);
     }
 
-    // Update smoke particles
+    // Update chalk dust particles
     if (this.particles) {
       this.particles.forEach(p => {
         if (!p.visible) return;
@@ -1283,31 +1343,17 @@ class TrajectorySimulator {
         } else {
           p.position.addScaledVector(p.userData.vel, delta);
           const lifeFraction = p.userData.life / p.userData.maxLife;
-          p.material.opacity = (1.0 - lifeFraction) * 0.75;
-          p.scale.setScalar(1.0 + lifeFraction * 3.5);
+          p.material.opacity = (1.0 - lifeFraction) * 0.8;
+          p.scale.setScalar(1.0 + lifeFraction * 2.2);
         }
       });
     }
 
-    // Update tumbling staged booster
-    if (this.stagedBooster && this.stagedBooster.visible) {
-      this.stagedBooster.position.addScaledVector(this.stagedBooster.userData.vel, delta);
-      this.stagedBooster.rotation.x += this.stagedBooster.userData.rotSpeed;
-      this.stagedBooster.rotation.z += this.stagedBooster.userData.rotSpeed * 0.7;
-    }
-
-    // Pulse landing beacon diamond
-    if (this.beaconDiamond && this.landingBeacon && this.landingBeacon.visible) {
-      this.beaconDiamond.rotation.y += 0.04;
-      const pulse = 1.0 + Math.sin(Date.now() * 0.006) * 0.2;
-      this.beaconDiamond.scale.setScalar(pulse);
-    }
-
-    // 3-Stage Cinematic Camera Sequence
+    // Tight Camera Follow
     this.updateCameraFollow(delta);
   }
 
-  emitLiftoffPuffs(delta) {
+  emitChalkDustPuffs(delta) {
     if (!this.particles || !this.rocketGroup) return;
     const pos = this.rocketGroup.position;
     for (let i = 0; i < 2; i++) {
@@ -1315,22 +1361,22 @@ class TrajectorySimulator {
       if (p && !p.visible) {
         p.visible = true;
         p.position.copy(pos).add(new THREE.Vector3(
-          (Math.random() - 0.5) * 1.5,
-          -2.5,
-          (Math.random() - 0.5) * 1.5
+          (Math.random() - 0.5) * 0.4,
+          (Math.random() - 0.5) * 0.4,
+          (Math.random() - 0.5) * 0.4
         ));
         p.userData.life = 0;
-        p.userData.maxLife = 0.9;
+        p.userData.maxLife = 0.85;
         p.userData.vel.set(
-          (Math.random() - 0.5) * 3.0,
-          -3.0,
-          (Math.random() - 0.5) * 3.0
+          (Math.random() - 0.5) * 0.8,
+          (Math.random() - 0.5) * 0.8,
+          (Math.random() - 0.5) * 0.8
         );
       }
     }
   }
 
-  // --- 7. 3-STAGE CINEMATIC CAMERA SEQUENCE ---
+  // --- 8. TIGHT CHASE CAMERA FRAMING ---
   updateCameraFollow(delta) {
     if (!this.rocketGroup || !this.rocketGroup.visible) return;
 
@@ -1338,21 +1384,21 @@ class TrajectorySimulator {
 
     if (this.cameraMode === 'follow') {
       if (this.isHoldingBlastoff || this.progress < 0.08) {
-        // Stage A (Earth Blast-off): Framing Earth close-up while rocket ascends
+        // Stage A (Earth Blast-off): Tight dramatic view on Earth surface launchpad
         const earthObj = this.app.planets['Earth'];
         const earthPos = new THREE.Vector3();
         if (earthObj && earthObj.mesh) earthObj.mesh.getWorldPosition(earthPos);
         else earthPos.set(95, 0, 0);
 
-        const stageAPos = new THREE.Vector3(earthPos.x + 16, earthPos.y + 10, earthPos.z + 16);
-        this.camera.position.lerp(stageAPos, 0.05);
+        const stageAPos = new THREE.Vector3(earthPos.x + 2.8, earthPos.y + 5.2, earthPos.z + 3.8);
+        this.camera.position.lerp(stageAPos, 0.06);
         this.controls.target.lerp(rocketPos, 0.12);
 
       } else if (this.progress >= 0.90) {
-        // Stage C (Arrival & Landing Site Climax): Zoom in on destination target
+        // Stage C (Arrival & Landing Site Climax): Tight framing on destination landing site
         if (this.trajectoryPoints.length > 0) {
           const destPos = this.trajectoryPoints[this.trajectoryPoints.length - 1];
-          const destCamOffset = new THREE.Vector3(16, 12, 18);
+          const destCamOffset = new THREE.Vector3(3.2, 2.4, 3.6);
           const desiredDestCam = destPos.clone().add(destCamOffset);
 
           this.camera.position.lerp(desiredDestCam, 0.06);
@@ -1360,17 +1406,17 @@ class TrajectorySimulator {
         }
 
       } else {
-        // Stage B (Interplanetary Chase Cam): Positioned behind and slightly above rocket
+        // Stage B (Interplanetary Chase Cam): Tight chase view locked behind miniature rocket
         const tangent = this.trajectoryCurve.getTangentAt(Math.min(this.progress + 0.005, 1.0));
-        const offset = tangent.clone().negate().multiplyScalar(26).add(new THREE.Vector3(0, 9, 0));
-        const desiredCamPos = rocketPos.clone().add(offset);
+        const camOffset = tangent.clone().negate().multiplyScalar(3.8).add(new THREE.Vector3(0, 1.4, 0));
+        const desiredCamPos = rocketPos.clone().add(camOffset);
 
         this.camera.position.lerp(desiredCamPos, 0.08);
         this.controls.target.lerp(rocketPos, 0.15);
       }
 
     } else if (this.cameraMode === 'orbit') {
-      // OrbitControls target locked on rocket, user can freely rotate around it
+      // OrbitControls target locked on miniature rocket, user can freely rotate around it
       this.controls.target.lerp(rocketPos, 0.15);
 
     } else if (this.cameraMode === 'solar') {
@@ -1380,7 +1426,7 @@ class TrajectorySimulator {
     }
   }
 
-  // --- 8. HUD METRICS & PHASES SYNCHRONIZATION ---
+  // --- 9. HUD METRICS & PHASES SYNCHRONIZATION ---
   updateHUDDisplay() {
     const mission = this.currentMission;
     if (!mission) return;
@@ -1482,19 +1528,20 @@ class TrajectorySimulator {
     }
   }
 
-  // --- 9. CLEAN EXIT & RESTORE ORBIT ---
+  // --- 10. CLEAN EXIT & RESTORE ORBIT ---
   stopSimulation() {
     this.isActive = false;
     this.isPaused = true;
     this.isHoldingBlastoff = false;
+    this.hasLanderPopped = false;
 
     // Hide rocket and markers
     if (this.rocketGroup) this.rocketGroup.visible = false;
     if (this.landingBeacon) this.landingBeacon.visible = false;
+    if (this.chalkDashedLine) this.chalkDashedLine.visible = false;
     if (this.trajectoryTube) this.trajectoryTube.visible = false;
     if (this.activeTrailMesh) this.activeTrailMesh.visible = false;
     if (this.waypointGroup) this.waypointGroup.visible = false;
-    if (this.stagedBooster) this.stagedBooster.visible = false;
 
     if (this.particles) {
       this.particles.forEach(p => p.visible = false);
